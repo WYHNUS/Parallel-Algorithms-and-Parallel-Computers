@@ -29,23 +29,60 @@ pthread_barrier_t barr, internal_barr;
 
 // Seed Input
 int A[NMAX];
-
-// Subset
 int B[NMAX];
+// Store Result
+int C[NMAX];
+
+int vector_A_size, vector_B_size;
+
+void read_file(char *file_name, int *data_array, int *data_array_length) {
+	int i = 0;
+	int num;
+	FILE *file;
+	file = fopen(file_name, "r");
+	if (file == NULL) {
+		printf("Error Reading File\n");
+		exit(0);
+	}
+	while (fscanf(file, "%d", &num) > 0) {
+		data_array[i] = num;
+		i++;
+	} 
+	*data_array_length = i;
+	fclose(file);
+}
+
+void print_array(int *array, int length) {
+	int i;
+	for (i=0; i<length; i++) {
+		printf("%d ", array[i]);
+	}
+	printf("\n");
+}
 
 void init(int n){
 	/* Initialize the input for this iteration*/
 	// B <- A
 }
 
-void seq_function(int m){
+void seq_function(int *A, int *B, int *C, int A_length, int B_length){
 	/* The code for sequential algorithm */
-	// Perform operations on B
+	int i = 0;
+	int j = 0;
+	while (i<A_length || j<B_length) {
+		if (i<A_length && A[i] < B[j]) {
+			C[i+j] = A[i];
+			i++;
+		} else {
+			C[i+j] = B[j];
+			j++;
+		}
+	}
 }
 
-void* par_function(void* a){
+void *par_function(void *a){
 	/* The code for threaded computation */
-	// Perform operations on B
+	return a;
 }
 
 int main (int argc, char *argv[])
@@ -64,6 +101,11 @@ int main (int argc, char *argv[])
 	for(k=0; k<NMAX; k++){
 		A[k] = rand();
 	}
+
+	read_file("test01_A.in", A, &vector_A_size);
+	read_file("test01_B.in", B, &vector_B_size);
+	seq_function(A, B, C, vector_A_size, vector_B_size);
+	print_array(C, vector_A_size + vector_B_size);
 
    	/* Initialize and set thread detached attribute */
    	pthread_attr_init(&attr);
