@@ -27,25 +27,63 @@ pthread_t callThd[NUM_THREADS];
 pthread_mutex_t mutexpm;
 pthread_barrier_t barr, internal_barr;
 
-// Seed Input
-int A[NMAX];
+// S is successor array, R is range array
+int S[NMAX];
+int R[NMAX];
 
-// Subset
-int B[NMAX];
+int data_length;
+
+void read_file(char *file_name) {
+	int i = 1;
+	int index, num;
+	FILE *file;
+	file = fopen(file_name, "r");
+	if (file == NULL) {
+		printf("Error Reading File\n");
+		exit(0);
+	}
+	while (fscanf(file, "%d %d", &index, &num) > 0) {
+		S[index] = num;
+		if (num == 0) {
+			R[index] = 0;	// root
+		} else {
+			R[index] = 1;
+		}
+		i++;
+	} 
+	data_length = i;
+}
+
+void print_result() {
+	int i;
+	for (i=1; i<data_length; i++) {
+		printf("%d  %d\n", i, R[i]);
+	}
+}
 
 void init(int n){
 	/* Initialize the input for this iteration*/
-	// B <- A
 }
 
-void seq_function(int m){
+void seq_function(){
 	/* The code for sequential algorithm */
-	// Perform operations on B
+	int i, not_finish;
+	not_finish = 1;
+	while (not_finish) {
+		not_finish = 0;
+		for (i=1; i<data_length; i++) {
+			if (S[i] != 0) {	// not root
+				R[i] += R[S[i]];
+				S[i] = S[S[i]];
+				not_finish = 1; 
+			}
+		}
+	}
 }
 
 void* par_function(void* a){
 	/* The code for threaded computation */
-	// Perform operations on B
+	return a;
 }
 
 int main (int argc, char *argv[])
@@ -62,8 +100,12 @@ int main (int argc, char *argv[])
 	/* Generate a seed input */
 	srand ( time(NULL) );
 	for(k=0; k<NMAX; k++){
-		A[k] = rand();
+		S[k] = rand();
 	}
+
+	read_file("test01.in");
+	seq_function();
+	print_result();
 
    	/* Initialize and set thread detached attribute */
    	pthread_attr_init(&attr);
