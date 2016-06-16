@@ -28,8 +28,9 @@ pthread_barrier_t barr, internal_barr;
 
 // Seed Input
 int A[NMAX];
-// Subset
+// Store result
 int B[NMAX];
+int C[NMAX];
 // file size
 int file_size;
 
@@ -68,10 +69,11 @@ int min(int a, int b) {
 
 void init(int n){
 	/* Initialize the input for this iteration*/
-	// B <- A
+	// B <- A, C <- A
 	int i;
 	for (i=0; i<n; i++) {
 		B[i] = A[i];
+		C[i] = A[i];
 	}
 }
 
@@ -138,17 +140,15 @@ void seq_function(int m, int show_output){
 		printf("initial array:\n");
 		print_array(A, file_size);
 	}
-	init(m);
 	seq_suffix_minima(B, m);
 	if (show_output) {
 		printf("resulting suffix_minima array:\n");
 		print_array(B, file_size);
 	}
-	init(m);
-	seq_prefix_minima(B, m);
+	seq_prefix_minima(C, m);
 	if (show_output) {
 		printf("resulting prefix_minima array:\n");
-		print_array(B, file_size);
+		print_array(C, file_size);
 	}
 }
 
@@ -171,6 +171,7 @@ int main (int argc, char *argv[])
 
   	/* Test Correctness */
 	read_file("test01.in");
+	init(file_size);
 	seq_function(file_size, 1);
 
 	/* Generate a seed input */
@@ -195,7 +196,7 @@ int main (int argc, char *argv[])
 		gettimeofday (&startt, NULL);
 		for (t=0; t<TIMES; t++) {
 			init(n);
-			seq_function(n);
+			seq_function(n, 0);
 		}
 		gettimeofday (&endt, NULL);
 		result.tv_usec = (endt.tv_sec*1000000+endt.tv_usec) - (startt.tv_sec*1000000+startt.tv_usec);
