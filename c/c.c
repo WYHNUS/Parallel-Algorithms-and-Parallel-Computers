@@ -97,16 +97,17 @@ int main (int argc, char *argv[])
   	result.tv_sec = 0;
   	result.tv_usec= 0;
 
+	/* Test Correctness */
+	read_file("test01.in");
+	seq_function();
+	print_result();
+
 	/* Generate a seed input */
 	srand ( time(NULL) );
 	for(k=0; k<NMAX; k++){
 		S[k] = rand();
 	}
-
-	read_file("test01.in");
-	seq_function();
-	print_result();
-
+	
    	/* Initialize and set thread detached attribute */
    	pthread_attr_init(&attr);
    	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);

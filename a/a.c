@@ -99,8 +99,8 @@ void seq_suffix_minima(int* array, int n) {
 		}
 	}
 	// debugging
-	printf("result array:\n");
-	print_array(array, n);
+	// printf("result array:\n");
+	// print_array(array, n);
 }
 
 void seq_prefix_minima(int* array, int n) {
@@ -127,17 +127,29 @@ void seq_prefix_minima(int* array, int n) {
 		}
 	}
 	// debugging
-	printf("result array:\n");
-	print_array(array, n);
+	// printf("result array:\n");
+	// print_array(array, n);
 }
 
-void seq_function(int m){
+void seq_function(int m, int show_output){
 	/* The code for sequential algorithm */
 	// Perform operations on B
+	if (show_output) {
+		printf("initial array:\n");
+		print_array(A, file_size);
+	}
 	init(m);
 	seq_suffix_minima(B, m);
+	if (show_output) {
+		printf("resulting suffix_minima array:\n");
+		print_array(B, file_size);
+	}
 	init(m);
 	seq_prefix_minima(B, m);
+	if (show_output) {
+		printf("resulting prefix_minima array:\n");
+		print_array(B, file_size);
+	}
 }
 
 void* par_function(void* a){
@@ -157,15 +169,15 @@ int main (int argc, char *argv[])
   	result.tv_sec = 0;
   	result.tv_usec= 0;
 
+  	/* Test Correctness */
+	read_file("test01.in");
+	seq_function(file_size, 1);
+
 	/* Generate a seed input */
 	srand ( time(NULL) );
 	for(k=0; k<NMAX; k++){
 		A[k] = rand();
 	}
-
-	read_file("test01.in");
-	init(file_size);
-	seq_function(file_size);
 
    	/* Initialize and set thread detached attribute */
    	pthread_attr_init(&attr);

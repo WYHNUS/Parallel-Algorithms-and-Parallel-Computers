@@ -96,16 +96,17 @@ int main (int argc, char *argv[])
   	result.tv_sec = 0;
   	result.tv_usec= 0;
 
+	/* Test Correctness */
+	read_file("test01_A.in", A, &vector_A_size);
+	read_file("test01_B.in", B, &vector_B_size);
+	seq_function(A, B, C, vector_A_size, vector_B_size);
+	print_array(C, vector_A_size + vector_B_size);
+
 	/* Generate a seed input */
 	srand ( time(NULL) );
 	for(k=0; k<NMAX; k++){
 		A[k] = rand();
 	}
-
-	read_file("test01_A.in", A, &vector_A_size);
-	read_file("test01_B.in", B, &vector_B_size);
-	seq_function(A, B, C, vector_A_size, vector_B_size);
-	print_array(C, vector_A_size + vector_B_size);
 
    	/* Initialize and set thread detached attribute */
    	pthread_attr_init(&attr);
