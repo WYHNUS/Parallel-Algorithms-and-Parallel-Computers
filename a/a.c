@@ -8,6 +8,9 @@
 // Number of threads
 #define NUM_THREADS 32
 
+//OpenMP chunk size
+#define CHUNK_SIZE 128
+
 // Number of iterations
 #define TIMES 1000
 
@@ -78,26 +81,37 @@ void init(int n){
 }
 
 void seq_suffix_minima(int* array, int n) {
-	int i;
+	int i, chunk, num_threads;
 	int Z[n];
 
 	// terminating case
 	if (n == 1) {
 		return;
 	}
-	for (i=0; i<n; i++) {
-		if (i%2 == 0) {
-			Z[i/2] = min(array[i], array[i+1]);
+	chunk = CHUNK_SIZE;
+	num_threads = NUM_THREADS;
+
+	#pragma omp parallel for shared(Z, array, chunk, num_threads) \
+	private(i) schedule(static, chunk) num_threads(num_threads) 
+	{
+		for (i=0; i<n; i++) {
+			if (i%2 == 0) {
+				Z[i/2] = min(array[i], array[i+1]);
+			}
 		}
 	}
 	// recursion
 	seq_suffix_minima(Z, n/2);
 
-	for (i=n-2; i>=0; i--) {
-		if (i%2 == 0) {
-			array[i] = Z[i/2];
-		} else {
-			array[i] = min(array[i], Z[i/2 + 1]);
+	#pragma omp parallel for shared(Z, array, chunk, num_threads) \
+	private(i) schedule(static, chunk) num_threads(num_threads) 
+	{
+		for (i=n-2; i>=0; i--) {
+			if (i%2 == 0) {
+				array[i] = Z[i/2];
+			} else {
+				array[i] = min(array[i], Z[i/2 + 1]);
+			}
 		}
 	}
 	// debugging
@@ -106,26 +120,37 @@ void seq_suffix_minima(int* array, int n) {
 }
 
 void seq_prefix_minima(int* array, int n) {
-	int i;
+	int i, chunk, num_threads;
 	int Z[n];
 
 	// terminating case
 	if (n == 1) {
 		return;
 	}
-	for (i=0; i<n; i++) {
-		if (i%2 == 0) {
-			Z[i/2] = min(array[i], array[i+1]);
+	chunk = CHUNK_SIZE;
+	num_threads = NUM_THREADS;
+
+	#pragma omp parallel for shared(Z, array, chunk, num_threads) \
+	private(i) schedule(static, chunk) num_threads(num_threads) 
+	{
+		for (i=0; i<n; i++) {
+			if (i%2 == 0) {
+				Z[i/2] = min(array[i], array[i+1]);
+			}
 		}
 	}
 	// recursion
 	seq_prefix_minima(Z, n/2);
 
-	for (i=1; i<n; i++) {
-		if (i%2 == 1) {
-			array[i] = Z[i/2];
-		} else {
-			array[i] = min(array[i], Z[i/2 - 1]);
+	#pragma omp parallel for shared(Z, array, chunk, num_threads) \
+	private(i) schedule(static, chunk) num_threads(num_threads) 
+	{
+		for (i=1; i<n; i++) {
+			if (i%2 == 1) {
+				array[i] = Z[i/2];
+			} else {
+				array[i] = min(array[i], Z[i/2 - 1]);
+			}
 		}
 	}
 	// debugging
