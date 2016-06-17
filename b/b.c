@@ -62,7 +62,11 @@ void print_array(int *array, int length) {
 
 void init(int n){
 	/* Initialize the input for this iteration*/
-	// B <- A
+	int i;
+	for (i=0; i<n; i++) {
+		B[i] = B[i+n];
+		// value of A[i] should remain the same
+	}
 }
 
 void seq_function(int *A, int *B, int *C, int A_length, int B_length){
@@ -124,7 +128,7 @@ int main (int argc, char *argv[])
 		gettimeofday (&startt, NULL);
 		for (t=0; t<TIMES; t++) {
 			init(n);
-			seq_function();
+			seq_function(A, B, C, n/2, n/2); 
 		}
 		gettimeofday (&endt, NULL);
 		result.tv_usec = (endt.tv_sec*1000000+endt.tv_usec) - (startt.tv_sec*1000000+startt.tv_usec);

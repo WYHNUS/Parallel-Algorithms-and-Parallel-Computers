@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <omp.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <math.h>
@@ -226,7 +227,7 @@ int main (int argc, char *argv[])
 		gettimeofday (&endt, NULL);
 		result.tv_usec = (endt.tv_sec*1000000+endt.tv_usec) - (startt.tv_sec*1000000+startt.tv_usec);
 		printf(" %ld.%06ld | ", result.tv_usec/1000000, result.tv_usec%1000000);
-
+	
 		/* Run threaded algorithm(s) */
 		for(nt=1; nt<NUM_THREADS; nt=nt<<1){
 		        if(pthread_barrier_init(&barr, NULL, nt+1))
@@ -241,7 +242,7 @@ int main (int argc, char *argv[])
 			}
 
 			result.tv_sec=0; result.tv_usec=0;
-			for (j=1; j<=/*NUMTHRDS*/nt; j++)
+			for (j=1; j<=nt; j++)
         		{
 				x[j].id = j; 
 				x[j].nrT=nt; // number of threads in this round
@@ -257,8 +258,8 @@ int main (int argc, char *argv[])
 			}
 			gettimeofday (&endt, NULL);
 
-			/* Wait on the other threads */
-			for(j=0; j</*NUMTHRDS*/nt; j++)
+			// Wait on the other threads 
+			for(j=0; j<nt; j++)
 			{
 				pthread_join(callThd[j], &status);
 			}
