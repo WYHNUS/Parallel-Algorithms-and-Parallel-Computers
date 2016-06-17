@@ -38,10 +38,10 @@ int C[NMAX];
 // file size
 int file_size;
 
-void read_file(char* file_name) {
+void read_file(char *file_name) {
 	int i = 0;
 	int num;
-	FILE* file;
+	FILE *file;
 	file = fopen(file_name, "r");
 	if (file == NULL) {
 		printf("Error Reading File\n");
@@ -55,7 +55,7 @@ void read_file(char* file_name) {
 	fclose(file);
 }
 
-void print_array(int* array, int length) {
+void print_array(int *array, int length) {
 	int i;
 	for (i=0; i<length; i++) {
 		printf("%d ", array[i]);
@@ -81,7 +81,7 @@ void init(int n){
 	}
 }
 
-void seq_suffix_minima(int* array, int n) {
+void seq_suffix_minima(int *array, int n) {
 	int i, chunk, num_threads;
 	int Z[n];
 
@@ -120,7 +120,7 @@ void seq_suffix_minima(int* array, int n) {
 	// print_array(array, n);
 }
 
-void seq_prefix_minima(int* array, int n) {
+void seq_prefix_minima(int *array, int n) {
 	int i, chunk, num_threads;
 	int Z[n];
 
@@ -161,7 +161,7 @@ void seq_prefix_minima(int* array, int n) {
 
 void seq_function(int m, int show_output){
 	/* The code for sequential algorithm */
-	// Perform operations on B
+	// Perform operations on B and C
 	if (show_output) {
 		printf("initial array:\n");
 		print_array(A, file_size);
@@ -178,19 +178,103 @@ void seq_function(int m, int show_output){
 	}
 }
 
-void* par_function(void* a){
+void *par_half_minima(void *par_arg) {
+	tThreadArg *thread_arg;
+	int i;
+
+	thread_arg = (tThreadArg *)par_arg;
+	for (i=thread_arg->start_index; i<thread_arg->end_index; i++) {
+		if (i%2 == 0) {
+			thread_data->result[i/2] = min(thread_data->src[i], thread_data->src[i+1]);
+		}
+	}
+
+	return NULL;
+}
+
+void *par_final_minima(void *par_arg) {
+	tThreadArg *thread_arg;
+	int i;
+	thread_arg = (tThreadArg *)par_arg;
+
+	if (thread_arg->choice == 0) {
+		for (i=thread_arg->end_index-1; i>=thread_arg->start_index; i--) {
+			if (i%2 == 0) {
+				thread_arg->src[i] = thread_arg->result[i/2];
+			} else {
+				thread_arg->src[i] = min(thread_arg->src[i], thread_arg->result[i/2 + 1]);
+			}
+		}
+	} else if (thread_arg->choice == 1) {
+		for (i=thread_arg->start_index; i<thread_arg->end_index; i++) {
+			if (i%2 == 1) {
+				thread_arg->src[i] = thread_arg->result[i/2];
+			} else {
+				thread_arg->src[i] = min(thread_arg->src[i], thread_arg->result[i/2 - 1]);
+			}
+		}
+	}
+
+	return NULL;
+}
+
+// same algo as the sequential one, just parallalize it
+// choice: 0 for suffix, 1 for prefix
+void par_minima(int *array, int n, int nt, int choice) {
+	int i, ele_per_td;
+	int Z[n];
+	void *status;
+  	tThreadArg x[NUM_THREADS];
+
+	// terminating case
+	if (n == 1) {
+		return;
+	}
+
+	// parallelize the original for loop
+	for (i=1; i<=nt; i++) {
+		ele_per_td = (int)(n / nt);
+		x[i].start_index = (i - 1) * ele_per_td;
+		x[i].end_index = i * ele_per_td;
+		x[i].choice = choice;
+		x[i].src = array;
+		x[i].result = Z;
+		pthread_create(&callThd[i-1], &attr, par_half_minima, (void *)&x[i]);
+	}
+
+	// Wait on the other threads 
+	for(j=0; j<nt; j++) {
+		pthread_join(callThd[j], &status);
+	}
+
+	// recursion
+	par_minima(Z, n/2, nt, choice);
+
+	// parallelize the original for loop
+	for (i=1; i<=nt; i++) { 
+		pthread_create(&callThd[i-1], &attr, par_final_minima, (void *)&x[i]);
+	}
+
+	// Wait on the other threads 
+	for(j=0; j<nt; j++) {
+		pthread_join(callThd[j], &status);
+	}
+}
+
+void par_function(int num_ele, int num_threads) {
 	/* The code for threaded computation */
-	// Perform operations on B
-	return a;
+	// Perform operations on B and C
+	par_minima(B, num_ele, num_threads, 0);
+	par_minima(C, num_ele, num_threads, 1);
+
+	return NULL;
 }
 
 int main (int argc, char *argv[])
 {
   	struct timeval startt, endt, result;
 	int i, j, k, nt, t, n, c;
-	void *status;
    	pthread_attr_t attr;
-  	tThreadArg x[NUM_THREADS];
 	
   	result.tv_sec = 0;
   	result.tv_usec= 0;
@@ -241,28 +325,17 @@ int main (int argc, char *argv[])
 			        return -1;
 			}
 
-			result.tv_sec=0; result.tv_usec=0;
-			for (j=1; j<=nt; j++)
-        		{
-				x[j].id = j; 
-				x[j].nrT=nt; // number of threads in this round
-				x[j].n=n;  //input size
-				pthread_create(&callThd[j-1], &attr, par_function, (void *)&x[j]);
-			}
+			result.tv_sec=0; 
+			result.tv_usec=0;
 
 			gettimeofday (&startt, NULL);
 			for (t=0; t<TIMES; t++) 
 			{
 				init(n);
-				pthread_barrier_wait(&barr);
+				par_function(n, nt);
+				// pthread_barrier_wait(&barr);
 			}
 			gettimeofday (&endt, NULL);
-
-			// Wait on the other threads 
-			for(j=0; j<nt; j++)
-			{
-				pthread_join(callThd[j], &status);
-			}
 
 			if (pthread_barrier_destroy(&barr)) {
         			printf("Could not destroy the barrier\n");
