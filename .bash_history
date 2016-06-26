@@ -156,3 +156,54 @@ git push origin master
 exit
 ssh yanhaowang@TUD277869.ws.tudelft.net
 exit
+ls
+cd a/
+ls
+gcc -pthread a.c
+ls
+ls -l
+./a.out 
+cat a.c
+./a
+./a.out
+gcc -pthread -o a.out a.c
+./a.out 
+vim a.c
+gcc a.c
+gcc -pthread -o a.out a.c
+ls -l
+./a.out
+vim a.c
+gcc -pthread -o a.out a.c
+vim a.c
+cd ..
+ls
+git pull origin master
+cd a
+ls
+vim a.c
+cd ..
+ls
+git status
+git commit -a -m "discard wrong changes"
+git pull origin master
+ls
+git status
+git log
+cd a
+vim a.c
+gcc -pthread -o a.out a.c
+vim a.c
+gcc -pthread -o a.out a.c
+cls
+clr
+clean
+vim a.c
+clear
+vim a.c
+gcc -pthread -o a.out a.c
+./a.out
+vim a.c
+gcc -pthread -o a.out a.c
+vim a.c
+./a.out

@@ -24,11 +24,17 @@ typedef struct __ThreadArg {
   int id;
   int nrT;
   int n;
+  int choice;
+  int start_index;
+  int end_index;
+  int* src;
+  int* result;
 } tThreadArg;
 
 pthread_t callThd[NUM_THREADS];
 pthread_mutex_t mutexpm;
 pthread_barrier_t barr, internal_barr;
+pthread_attr_t attr;
 
 // Seed Input
 int A[NMAX];
@@ -185,7 +191,7 @@ void *par_half_minima(void *par_arg) {
 	thread_arg = (tThreadArg *)par_arg;
 	for (i=thread_arg->start_index; i<thread_arg->end_index; i++) {
 		if (i%2 == 0) {
-			thread_data->result[i/2] = min(thread_data->src[i], thread_data->src[i+1]);
+			thread_arg->result[i/2] = min(thread_arg->src[i], thread_arg->src[i+1]);
 		}
 	}
 
@@ -221,7 +227,7 @@ void *par_final_minima(void *par_arg) {
 // same algo as the sequential one, just parallalize it
 // choice: 0 for suffix, 1 for prefix
 void par_minima(int *array, int n, int nt, int choice) {
-	int i, ele_per_td;
+	int i, j, ele_per_td;
 	int Z[n];
 	void *status;
   	tThreadArg x[NUM_THREADS];
@@ -266,23 +272,24 @@ void par_function(int num_ele, int num_threads) {
 	// Perform operations on B and C
 	par_minima(B, num_ele, num_threads, 0);
 	par_minima(C, num_ele, num_threads, 1);
-
-	return NULL;
 }
 
 int main (int argc, char *argv[])
 {
   	struct timeval startt, endt, result;
 	int i, j, k, nt, t, n, c;
-   	pthread_attr_t attr;
 	
   	result.tv_sec = 0;
   	result.tv_usec= 0;
 
   	/* Test Correctness */
 	read_file("test01.in");
+	printf("Test for correctness:\n");
+	printf("Results for sequential algorithm (with OpenMP to parallelize the for loops):\n");
 	init(file_size);
-//	seq_function(file_size, 1);
+	seq_function(file_size, 1);
+	printf("Results for pthread algorithm:\n");
+	init(file_size);
 	par_function(file_size, 2);
 	printf("suffix minima: \n");
 	print_array(B, file_size);
