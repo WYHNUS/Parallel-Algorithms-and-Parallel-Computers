@@ -86,3 +86,73 @@ gcc -pthread -o a a.c
 ./a 
 cat a
 exit
+ls
+cd a
+ls
+gcc -pthread -o a a.c
+./a
+vim a.c 
+gcc -pthread -o a a.c
+./a
+vim a.c 
+gcc -pthread -o a a.c
+./a
+cd .
+cd ..
+cd b
+ls
+vim b.c 
+gcc b.c 
+vim b.c 
+gcc b.c 
+gcc -pthread -o a b.c 
+./a
+ls
+rm a
+ls
+cat b.c 
+cd ..
+cd a/
+ls
+vim a.c 
+gcc -pthread a.c 
+./a
+vim a.c
+gcc -pthread a.c 
+./a.out 
+vim a.c
+gcc -pthread a.c 
+./a.out 
+vim a.c
+gcc -pthread a.c 
+./a.out 
+vim a.c
+gcc -pthread a.c 
+./a.out 
+vim a.c
+gcc -pthread a.c 
+./a.out 
+vim a.c
+gcc -pthread a.c 
+./a.out 
+gcc -pthread a.c 
+./a.out 
+vim a.c
+ls
+vim a.c
+gcc -pthread a.c 
+./a.out 
+cd ..
+ls
+git push origin master
+git status
+vim a/a.c
+git add .
+git commit -a -m "update sequential for part a"
+git config --global user.email "wangyanhao1993@163.com"
+git config --global user.name "WYHNUS"
+git commit -a -m "update sequential for part a"
+git push origin master
+exit
+ssh yanhaowang@TUD277869.ws.tudelft.net
+exit

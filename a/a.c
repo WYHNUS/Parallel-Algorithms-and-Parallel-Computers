@@ -198,7 +198,12 @@ int main (int argc, char *argv[])
   	/* Test Correctness */
 	read_file("test01.in");
 	init(file_size);
-	seq_function(file_size, 1);
+//	seq_function(file_size, 1);
+	par_function(file_size, 2);
+	printf("suffix minima: \n");
+	print_array(B, file_size);
+	printf("preffix minima: \n");
+	print_array(C, file_size);
 
 	/* Generate a seed input */
 	srand ( time(NULL) );
