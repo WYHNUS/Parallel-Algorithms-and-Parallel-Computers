@@ -207,3 +207,16 @@ vim a.c
 gcc -pthread -o a.out a.c
 vim a.c
 ./a.out
+ls
+git status
+git add .
+git commit -a -m "fix undelared variable issue for part a"
+git push origin master
+exit
+ssh yanhaowang@TUD277869.ws.tudelft.net
+cd a
+vim a.c
+gcc -pthread -o a.out a.c
+ls
+ssh yanhaowang@TUD277869.ws.tudelft.net
+exit

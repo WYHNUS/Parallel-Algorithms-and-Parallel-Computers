@@ -205,6 +205,9 @@ void *par_final_minima(void *par_arg) {
 
 	if (thread_arg->choice == 0) {
 		for (i=thread_arg->end_index-1; i>=thread_arg->start_index; i--) {
+			if (i>thread_arg->n - 2) {
+				continue;
+			}
 			if (i%2 == 0) {
 				thread_arg->src[i] = thread_arg->result[i/2];
 			} else {
@@ -215,7 +218,7 @@ void *par_final_minima(void *par_arg) {
 		for (i=thread_arg->start_index; i<thread_arg->end_index; i++) {
 			if (i%2 == 1) {
 				thread_arg->src[i] = thread_arg->result[i/2];
-			} else {
+			} else if (i != 0) {
 				thread_arg->src[i] = min(thread_arg->src[i], thread_arg->result[i/2 - 1]);
 			}
 		}
@@ -240,6 +243,7 @@ void par_minima(int *array, int n, int nt, int choice) {
 	// parallelize the original for loop
 	for (i=1; i<=nt; i++) {
 		ele_per_td = (int)(n / nt);
+		x[i].n = n;
 		x[i].start_index = (i - 1) * ele_per_td;
 		x[i].end_index = i * ele_per_td;
 		x[i].choice = choice;
