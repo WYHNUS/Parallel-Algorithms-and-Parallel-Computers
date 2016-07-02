@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
-#include <omp.h>
-#include <pthread.h>
+// #include <omp.h>
+// #include <pthread.h>
 #include <stdlib.h>
 #include <math.h>
 #include <sys/time.h>
@@ -61,27 +61,64 @@ void print_array(int *array, int length) {
 	printf("\n");
 }
 
-void init(int n){
+void init(int n) {
 	/* Initialize the input for this iteration*/
 	int i;
 	for (i=0; i<n; i++) {
-		B[i] = B[i+n];
-		// value of A[i] should remain the same
+		C[i] = 0;
 	}
 }
 
-void seq_function(int *A, int *B, int *C, int A_length, int B_length){
-	/* The code for sequential algorithm */
-	int i = 0;
-	int j = 0;
-	while (i<A_length || j<B_length) {
-		if (i<A_length && A[i] < B[j]) {
+// v: value, A: array, si: start_index, ei: end_index
+int get_rank(int v, int *A, int si, int ei) {
+	// binary search
+	if (si == ei) {
+		if (A[si] <= v) {
+			return si+1;
+		} else {
+			return si;
+		}
+	} else {
+		int ci = (si + ei) / 2;
+		if (A[ci] > v) {
+			return get_rank(v, A, si, ci-1);
+		} else {
+			return get_rank(v, A, ci+1, ei);
+		}
+	}
+}
+
+// si: start_index; ei: end_index
+void opt_seq_merge(int *A, int*B, int *C, int si_A, int ei_A, int si_B, int ei_B) {
+	/* The code for optimal sequential merge */
+	int i = si_A;
+	int j = si_B;
+	while (i<ei_A || j<ei_B) {
+		if (i<ei_A && A[i] < B[j]) {
 			C[i+j] = A[i];
 			i++;
 		} else {
 			C[i+j] = B[j];
 			j++;
 		}
+	}
+}
+
+void seq_function(int *A, int *B, int *C, int A_length, int B_length) {
+	/* The code for sequential algorithm */
+	int i;
+	int num_part = log2(A_length);
+	int part_size = A_length/num_part;
+	int sa[num_part+1];
+	int sb[num_part+1];
+	sa[0] = 0; sb[0] = 0; 
+	sa[num_part] = A_length; sb[num_part] = B_length;
+	for (i=1; i<num_part; i++) {
+		sa[i] = sa[i-1] + part_size;
+		sb[i] = get_rank(A[i*part_size-1], B, 0, B_length);
+	}
+	for (i=0; i<num_part; i++) {
+		opt_seq_merge(A, B, C, sa[i], sa[i+1], sb[i], sb[i+1]);
 	}
 }
 
@@ -104,7 +141,13 @@ int main (int argc, char *argv[])
 	/* Test Correctness */
 	read_file("test01_A.in", A, &vector_A_size);
 	read_file("test01_B.in", B, &vector_B_size);
+	init(vector_A_size + vector_B_size);
 	seq_function(A, B, C, vector_A_size, vector_B_size);
+	printf("Array A:\n");
+	print_array(A, vector_A_size);
+	printf("Array B:\n");
+	print_array(B, vector_B_size);
+	printf("Result after merging:\n");
 	print_array(C, vector_A_size + vector_B_size);
 
 	/* Generate a seed input */
