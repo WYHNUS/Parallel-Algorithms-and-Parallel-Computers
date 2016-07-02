@@ -24,8 +24,15 @@ typedef struct __ThreadArg {
   int id;
   int nrT;
   int n;
+  int *A;
+  int *B;
+  int *C;
+  int B_length;
+  int *sa;
+  int *sb;
+  int part_size;
+  int num_part;
 } tThreadArg;
-
 
 pthread_t callThd[NUM_THREADS];
 pthread_mutex_t mutexpm;

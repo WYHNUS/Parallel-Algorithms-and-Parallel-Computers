@@ -28,6 +28,8 @@ pthread_t callThd[NUM_THREADS];
 pthread_mutex_t mutexpm;
 pthread_barrier_t barr, internal_barr;
 
+// Seed Input
+int A[NMAX];
 // S is successor array, R is range array
 int S[NMAX];
 int R[NMAX];
@@ -44,39 +46,46 @@ void read_file(char *file_name) {
 		exit(0);
 	}
 	while (fscanf(file, "%d %d", &index, &num) > 0) {
-		S[index] = num;
-		if (num == 0) {
-			R[index] = 0;	// root
-		} else {
-			R[index] = 1;
-		}
+		A[index] = num;
 		i++;
 	} 
 	data_length = i;
 }
 
-void print_result() {
+void print_array(int *array, int length) {
 	int i;
-	for (i=1; i<data_length; i++) {
-		printf("%d  %d\n", i, R[i]);
+	for (i=0; i<length; i++) {
+		printf("%d ", array[i]);
 	}
+	printf("\n");
 }
 
 void init(int n){
 	/* Initialize the input for this iteration*/
+	int i;
+	for (i=0; i<n; i++) {
+		S[i] = A[i];
+		R[i] = 0;
+	}
 }
 
-void seq_function(){
+void seq_function(int n){
 	/* The code for sequential algorithm */
-	int i, not_finish;
-	not_finish = 1;
-	while (not_finish) {
-		not_finish = 0;
-		for (i=1; i<data_length; i++) {
-			if (S[i] != 0) {	// not root
-				R[i] += R[S[i]];
-				S[i] = S[S[i]];
-				not_finish = 1; 
+	int i, j;
+
+	for (i=0; i<n; i++) {
+		if (S[i] == 0) {
+			R[i] = 0;	// root
+		} else {
+			R[i] = 1;
+		}
+	}
+
+	for (i=0; i<log2(n); i++) {
+		for (j=1; j<n; j++) {
+			if (S[j] != 0) {	// not root
+				R[j] += R[S[j]];
+				S[j] = S[S[j]];
 			}
 		}
 	}
@@ -99,9 +108,14 @@ int main (int argc, char *argv[])
   	result.tv_usec= 0;
 
 	/* Test Correctness */
+	printf("Test for correctness:\n");
 	read_file("test01.in");
-	seq_function();
-	print_result();
+	printf("Input array: (ignore leading 0)\n");
+	print_array(A, data_length);
+	init(data_length);
+	seq_function(data_length);
+	printf("Results for sequential algorithm: (ignore leading 0)\n");
+	print_array(R, data_length);
 
 	/* Generate a seed input */
 	srand ( time(NULL) );
