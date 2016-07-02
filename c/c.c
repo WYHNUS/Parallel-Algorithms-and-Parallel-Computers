@@ -9,6 +9,9 @@
 // Number of threads
 #define NUM_THREADS 32
 
+//OpenMP chunk size
+#define CHUNK_SIZE 128
+
 // Number of iterations
 #define TIMES 1000
 
@@ -71,21 +74,32 @@ void init(int n){
 
 void seq_function(int n){
 	/* The code for sequential algorithm */
-	int i, j;
+	int i, j, chunk, num_threads;
+	chunk = CHUNK_SIZE;
+	num_threads = NUM_THREADS;
 
-	for (i=0; i<n; i++) {
-		if (S[i] == 0) {
-			R[i] = 0;	// root
-		} else {
-			R[i] = 1;
+	#pragma omp parallel for shared(S, R) private(i) \
+	schedule(static, chunk) num_threads(num_threads)
+	{
+		for (i=0; i<n; i++) {
+			if (S[i] == 0) {
+				R[i] = 0;	// root
+			} else {
+				R[i] = 1;
+			}
 		}
 	}
 
 	for (i=0; i<log2(n); i++) {
-		for (j=1; j<n; j++) {
-			if (S[j] != 0) {	// not root
-				R[j] += R[S[j]];
-				S[j] = S[S[j]];
+
+		#pragma omp parallel for shared(S, R, i) private(j) \
+		schedule(static, chunk) num_threads(num_threads)
+		{
+			for (j=1; j<n; j++) {
+				if (S[j] != 0) {	// not root
+					R[j] += R[S[j]];
+					S[j] = S[S[j]];
+				}
 			}
 		}
 	}
