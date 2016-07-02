@@ -30,6 +30,7 @@ typedef struct __ThreadArg {
 pthread_t callThd[NUM_THREADS];
 pthread_mutex_t mutexpm;
 pthread_barrier_t barr, internal_barr;
+pthread_attr_t attr;
 
 // Seed Input
 int A[NMAX];
@@ -138,18 +139,106 @@ void seq_function(int *A, int *B, int *C, int A_length, int B_length) {
 	}
 }
 
-void *par_function(void *a){
+void *calc_rank(void *par_arg) {
+	tThreadArg *thread_arg;
+	thread_arg = (tThreadArg *)par_arg;
+
+	int i, j, num_part, part_size, ele_per_td, si, ei;
+	int *sa = thread_arg->sa;
+	int *sb = thread_arg->sb;
+
+	j = thread_arg->id;
+	num_part = thread_arg->num_part;
+	part_size = thread_arg->part_size;
+
+	ele_per_td = (int)(num_part / thread_arg->nt);
+	si = (j - 1) * ele_per_td;
+	ei = j * ele_per_td;
+
+	for (i=si; i<ei; i++) {
+		sa[i] = i * part_size;
+		sb[i] = get_rank(thread_arg->A[i*part_size-1], thread_arg->B, 0, thread_arg->B_length);
+	}
+
+	return NULL;
+}
+
+void *par_merge(void *par_arg) {
+	tThreadArg *thread_arg;
+	thread_arg = (tThreadArg *)par_arg;
+
+	int i, j, num_part, ele_per_td, si, ei;
+	int *sa = thread_arg->sa;
+	int *sb = thread_arg->sb;
+	
+	j = thread_arg->id;
+	num_part = thread_arg->num_part;
+
+	ele_per_td = (int)(num_part / thread_arg->nt);
+	si = (j - 1) * ele_per_td;
+	ei = j * ele_per_td;
+
+	for (i=si; i<ei; i++) {
+		opt_seq_merge(thread_arg->A, thread_arg->B, thread_arg->C, sa[i], sa[i+1], sb[i], sb[i+1]);
+	}
+}
+
+void par_function(int *A, int *B, int *C, int A_length, int B_length){
 	/* The code for threaded computation */
-	return a;
+	void *status;
+  	tThreadArg x[NUM_THREADS];
+
+	int i, chunk, num_threads;
+	chunk = CHUNK_SIZE;
+	num_threads = NUM_THREADS;
+	
+	int num_part = log2(A_length);
+	int part_size = A_length/num_part;
+	int sa[num_part+1];
+	int sb[num_part+1];
+	sa[0] = 0; sb[0] = 0; 
+	sa[num_part] = A_length; sb[num_part] = B_length;
+
+	// parallelize the original for loop
+	for (j=1; j<=/*NUMTHRDS*/nt; j++)
+	{
+		x[j].id = j; 
+		x[j].nrT=nt; // number of threads in this round
+		x[j].n=n;  //input size
+		x[j].A = A;
+		x[j].B = B;
+		x[j].C = C;
+		x[j].B_length = B_length;
+		x[j].sa = sa;
+		x[j].sb = sb;
+		x[j].part_size = part_size;
+		x[j].num_part = num_part;
+		pthread_create(&callThd[j-1], &attr, calc_rank, (void *)&x[j]);
+	}
+
+	/* Wait on the other threads */
+	for(j=0; j</*NUMTHRDS*/nt; j++)
+	{
+		pthread_join(callThd[j], &status);
+	}
+
+	// parallelize the original for loop
+	for (j=1; j<=/*NUMTHRDS*/nt; j++)
+	{
+		pthread_create(&callThd[j-1], &attr, par_merge, (void *)&x[j]);
+	}
+
+	/* Wait on the other threads */
+	for(j=0; j</*NUMTHRDS*/nt; j++)
+	{
+		pthread_join(callThd[j], &status);
+	}
 }
 
 int main (int argc, char *argv[])
 {
   	struct timeval startt, endt, result;
 	int i, j, k, nt, t, n, c;
-	void *status;
-   	pthread_attr_t attr;
-  	tThreadArg x[NUM_THREADS];
 	
   	result.tv_sec = 0;
   	result.tv_usec= 0;
@@ -157,19 +246,26 @@ int main (int argc, char *argv[])
 	/* Test Correctness */
 	read_file("test01_A.in", A, &vector_A_size);
 	read_file("test01_B.in", B, &vector_B_size);
+	printf("Test for correctness:\n");
 	init(vector_A_size + vector_B_size);
 	seq_function(A, B, C, vector_A_size, vector_B_size);
 	printf("Array A:\n");
 	print_array(A, vector_A_size);
 	printf("Array B:\n");
 	print_array(B, vector_B_size);
-	printf("Result after merging:\n");
+	printf("Result after merging for sequential algorithm (with OpenMP to parallelize the for loops):\n");
+	print_array(C, vector_A_size + vector_B_size);
+	
+	printf("Results for pthread algorithm:\n");
+	init(vector_A_size + vector_B_size);
+	par_function(A, B, C, vector_A_size, vector_B_size);
 	print_array(C, vector_A_size + vector_B_size);
 
 	/* Generate a seed input */
 	srand ( time(NULL) );
 	for(k=0; k<NMAX; k++){
-		A[k] = rand();
+		A[k] = k;
+		B[k] = 2*k;
 	}
 
    	/* Initialize and set thread detached attribute */
@@ -208,27 +304,15 @@ int main (int argc, char *argv[])
 			}
 
 			result.tv_sec=0; result.tv_usec=0;
-			for (j=1; j<=/*NUMTHRDS*/nt; j++)
-        		{
-				x[j].id = j; 
-				x[j].nrT=nt; // number of threads in this round
-				x[j].n=n;  //input size
-				pthread_create(&callThd[j-1], &attr, par_function, (void *)&x[j]);
-			}
 
 			gettimeofday (&startt, NULL);
 			for (t=0; t<TIMES; t++) 
 			{
 				init(n);
-				pthread_barrier_wait(&barr);
+				par_function(A, B, C, n/2, n/2);
+				// pthread_barrier_wait(&barr);
 			}
 			gettimeofday (&endt, NULL);
-
-			/* Wait on the other threads */
-			for(j=0; j</*NUMTHRDS*/nt; j++)
-			{
-				pthread_join(callThd[j], &status);
-			}
 
 			if (pthread_barrier_destroy(&barr)) {
         			printf("Could not destroy the barrier\n");
