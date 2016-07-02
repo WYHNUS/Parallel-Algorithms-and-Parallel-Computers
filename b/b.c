@@ -128,8 +128,8 @@ void seq_function(int *A, int *B, int *C, int A_length, int B_length) {
 	sa[0] = 0; sb[0] = 0; 
 	sa[num_part] = A_length; sb[num_part] = B_length;
 
-	#pragma omp parallel for shared(A, sa, sb, num_part, part_size, B_length, \
-	chunk, num_threads) private(i) schedule(static, chunk) num_threads(num_threads) 
+	#pragma omp parallel for shared(A, sa, sb, chunk, num_threads) \
+	private(i) schedule(static, chunk) num_threads(num_threads) 
 	{
 		for (i=1; i<num_part; i++) {
 			sa[i] = sa[i-1] + part_size;
@@ -137,7 +137,7 @@ void seq_function(int *A, int *B, int *C, int A_length, int B_length) {
 		}
 	}
 
-	#pragma omp parallel for shared(A, B, C, num_part, sa, sb, chunk, num_threads) \
+	#pragma omp parallel for shared(A, B, C, sa, sb, chunk, num_threads) \
 	private(i) schedule(static, chunk) num_threads(num_threads) 
 	{
 		for (i=0; i<num_part; i++) {
@@ -158,7 +158,7 @@ void *calc_rank(void *par_arg) {
 	num_part = thread_arg->num_part;
 	part_size = thread_arg->part_size;
 
-	ele_per_td = (int)(num_part / thread_arg->nt);
+	ele_per_td = (int)(num_part / thread_arg->nrT);
 	si = (j - 1) * ele_per_td;
 	ei = j * ele_per_td;
 
@@ -181,7 +181,7 @@ void *par_merge(void *par_arg) {
 	j = thread_arg->id;
 	num_part = thread_arg->num_part;
 
-	ele_per_td = (int)(num_part / thread_arg->nt);
+	ele_per_td = (int)(num_part / thread_arg->nrT);
 	si = (j - 1) * ele_per_td;
 	ei = j * ele_per_td;
 
@@ -190,15 +190,12 @@ void *par_merge(void *par_arg) {
 	}
 }
 
-void par_function(int *A, int *B, int *C, int A_length, int B_length){
+void par_function(int *A, int *B, int *C, int A_length, int B_length, int nt){
 	/* The code for threaded computation */
 	void *status;
   	tThreadArg x[NUM_THREADS];
 
-	int i, chunk, num_threads;
-	chunk = CHUNK_SIZE;
-	num_threads = NUM_THREADS;
-	
+	int j;
 	int num_part = log2(A_length);
 	int part_size = A_length/num_part;
 	int sa[num_part+1];
@@ -211,7 +208,6 @@ void par_function(int *A, int *B, int *C, int A_length, int B_length){
 	{
 		x[j].id = j; 
 		x[j].nrT=nt; // number of threads in this round
-		x[j].n=n;  //input size
 		x[j].A = A;
 		x[j].B = B;
 		x[j].C = C;
@@ -265,7 +261,7 @@ int main (int argc, char *argv[])
 	
 	printf("Results for pthread algorithm:\n");
 	init(vector_A_size + vector_B_size);
-	par_function(A, B, C, vector_A_size, vector_B_size);
+	par_function(A, B, C, vector_A_size, vector_B_size, 2);
 	print_array(C, vector_A_size + vector_B_size);
 
 	/* Generate a seed input */
@@ -316,7 +312,7 @@ int main (int argc, char *argv[])
 			for (t=0; t<TIMES; t++) 
 			{
 				init(n);
-				par_function(A, B, C, n/2, n/2);
+				par_function(A, B, C, n/2, n/2, nt);
 				// pthread_barrier_wait(&barr);
 			}
 			gettimeofday (&endt, NULL);

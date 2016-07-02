@@ -91,7 +91,6 @@ void seq_function(int n){
 	}
 
 	for (i=0; i<log2(n); i++) {
-
 		#pragma omp parallel for shared(S, R, i) private(j) \
 		schedule(static, chunk) num_threads(num_threads)
 		{
