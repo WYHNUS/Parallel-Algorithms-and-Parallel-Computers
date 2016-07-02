@@ -220,3 +220,23 @@ gcc -pthread -o a.out a.c
 ls
 ssh yanhaowang@TUD277869.ws.tudelft.net
 exit
+ls
+cd a
+ls
+cd ..
+git status
+git log
+cd a
+ls
+vim a.c
+gcc -pthread -o a.out a.c
+./a.out
+vim a.c
+cd ..
+ls
+git commit -a -m "fix part a pthread boundary case bug"
+git status
+git push origin master
+exit
+ssh yanhaowang@TUD277869.ws.tudelft.net
+exit

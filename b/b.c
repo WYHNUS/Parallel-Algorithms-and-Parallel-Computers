@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
-// #include <omp.h>
-// #include <pthread.h>
+#include <omp.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include <math.h>
 #include <sys/time.h>
