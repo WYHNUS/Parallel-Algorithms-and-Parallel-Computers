@@ -9,6 +9,9 @@
 // Number of threads
 #define NUM_THREADS 32
 
+//OpenMP chunk size
+#define CHUNK_SIZE 128
+
 // Number of iterations
 #define TIMES 1000
 
@@ -106,19 +109,32 @@ void opt_seq_merge(int *A, int*B, int *C, int si_A, int ei_A, int si_B, int ei_B
 
 void seq_function(int *A, int *B, int *C, int A_length, int B_length) {
 	/* The code for sequential algorithm */
-	int i;
+	int i, chunk, num_threads;
+	chunk = CHUNK_SIZE;
+	num_threads = NUM_THREADS;
+	
 	int num_part = log2(A_length);
 	int part_size = A_length/num_part;
 	int sa[num_part+1];
 	int sb[num_part+1];
 	sa[0] = 0; sb[0] = 0; 
 	sa[num_part] = A_length; sb[num_part] = B_length;
-	for (i=1; i<num_part; i++) {
-		sa[i] = sa[i-1] + part_size;
-		sb[i] = get_rank(A[i*part_size-1], B, 0, B_length);
+
+	#pragma omp parallel for shared(A, sa, sb, num_part, part_size, B_length, \
+	chunk, num_threads) private(i) schedule(static, chunk) num_threads(num_threads) 
+	{
+		for (i=1; i<num_part; i++) {
+			sa[i] = sa[i-1] + part_size;
+			sb[i] = get_rank(A[i*part_size-1], B, 0, B_length);
+		}
 	}
-	for (i=0; i<num_part; i++) {
-		opt_seq_merge(A, B, C, sa[i], sa[i+1], sb[i], sb[i+1]);
+
+	#pragma omp parallel for shared(A, B, C, num_part, sa, sb, chunk, num_threads) \
+	private(i) schedule(static, chunk) num_threads(num_threads) 
+	{
+		for (i=0; i<num_part; i++) {
+			opt_seq_merge(A, B, C, sa[i], sa[i+1], sb[i], sb[i+1]);
+		}
 	}
 }
 
