@@ -24,12 +24,15 @@ typedef struct __ThreadArg {
   int id;
   int nrT;
   int n;
+  int *S;
+  int *R;
 } tThreadArg;
 
 
 pthread_t callThd[NUM_THREADS];
 pthread_mutex_t mutexpm;
 pthread_barrier_t barr, internal_barr;
+pthread_attr_t attr;
 
 // Seed Input
 int A[NMAX];
@@ -104,18 +107,76 @@ void seq_function(int n){
 	}
 }
 
-void* par_function(void* a){
+void *init_dist(int *par_arg) {
+	tThreadArg *thread_arg;
+	int i;
+
+	int size = (int)(thread_arg->n / thread_arg->nrT);
+	int si = size * (thread_arg->j - 1);
+	int ei = size * thread_arg->j;
+
+	for (i=si; i<ei; i++) {
+		if (thread_arg->S[i] == 0) {
+			thread_arg->R[i] = 0;
+		} else {
+			thread_arg->R[i] = 1;
+		}
+	}
+}
+
+void *search_root(int *par_arg) {
+	tThreadArg *thread_arg;
+	int j;
+
+	int size = (int)(thread_arg->n / thread_arg->nrT);
+	int si = size * (thread_arg->j - 1);
+	int ei = size * thread_arg->j;
+	int *S = thread_arg->S;
+	int *R = thread_arg->R;
+
+	for (j=si; j<ei; j++) {
+		if (S[j] != 0) {	// not root
+			R[j] += R[S[j]];
+			S[j] = S[S[j]];
+		}
+	}
+}
+
+void par_function(int n, int nt){
 	/* The code for threaded computation */
-	return a;
+	int i, j;
+	void *status;
+  	tThreadArg x[NUM_THREADS];
+
+  	// parallelize the original for loop
+	for (j=1; j<=/*NUMTHRDS*/nt; j++)
+	{
+		x[j].id = j; 
+		x[j].nrT=nt; // number of threads in this round
+		x[j].n=n;  //input size
+		x[j].R = R;
+		x[j].S = S;
+		pthread_create(&callThd[j-1], &attr, init_dist, (void *)&x[j]);
+	}
+	
+	/* Wait on the other threads */
+	for(j=0; j</*NUMTHRDS*/nt; j++)
+	{
+		pthread_join(callThd[j], &status);
+	}
+
+	for (i=0; i<log2(n); i++) {
+		for (j=1; j<=/*NUMTHRDS*/nt; j++)
+		{
+			pthread_create(&callThd[j-1], &attr, search_root, (void *)&x[j]);
+		}
+	}
 }
 
 int main (int argc, char *argv[])
 {
   	struct timeval startt, endt, result;
 	int i, j, k, nt, t, n, c;
-	void *status;
-   	pthread_attr_t attr;
-  	tThreadArg x[NUM_THREADS];
 	
   	result.tv_sec = 0;
   	result.tv_usec= 0;
@@ -125,9 +186,15 @@ int main (int argc, char *argv[])
 	read_file("test01.in");
 	printf("Input array: (ignore leading 0)\n");
 	print_array(A, data_length);
+	
+	printf("Results for sequential algorithm: (ignore leading 0)\n");
 	init(data_length);
 	seq_function(data_length);
-	printf("Results for sequential algorithm: (ignore leading 0)\n");
+	print_array(R, data_length);
+
+	printf("Results for pthread algorithm: (ignore leading 0)\n");
+	init(data_length);
+	par_function(data_length, 2);
 	print_array(R, data_length);
 
 	/* Generate a seed input */
@@ -152,7 +219,7 @@ int main (int argc, char *argv[])
 		gettimeofday (&startt, NULL);
 		for (t=0; t<TIMES; t++) {
 			init(n);
-			seq_function();
+			seq_function(n);
 		}
 		gettimeofday (&endt, NULL);
 		result.tv_usec = (endt.tv_sec*1000000+endt.tv_usec) - (startt.tv_sec*1000000+startt.tv_usec);
@@ -171,28 +238,17 @@ int main (int argc, char *argv[])
 			        return -1;
 			}
 
-			result.tv_sec=0; result.tv_usec=0;
-			for (j=1; j<=/*NUMTHRDS*/nt; j++)
-        		{
-				x[j].id = j; 
-				x[j].nrT=nt; // number of threads in this round
-				x[j].n=n;  //input size
-				pthread_create(&callThd[j-1], &attr, par_function, (void *)&x[j]);
-			}
-
+			result.tv_sec=0; 
+			result.tv_usec=0;
+			
 			gettimeofday (&startt, NULL);
 			for (t=0; t<TIMES; t++) 
 			{
 				init(n);
-				pthread_barrier_wait(&barr);
+				par_function(n, nt);
+				// pthread_barrier_wait(&barr);
 			}
 			gettimeofday (&endt, NULL);
-
-			/* Wait on the other threads */
-			for(j=0; j</*NUMTHRDS*/nt; j++)
-			{
-				pthread_join(callThd[j], &status);
-			}
 
 			if (pthread_barrier_destroy(&barr)) {
         			printf("Could not destroy the barrier\n");
