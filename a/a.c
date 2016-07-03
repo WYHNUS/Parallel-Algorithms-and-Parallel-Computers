@@ -87,32 +87,33 @@ void init(int n){
 	}
 }
 
-void seq_suffix_minima(int *array, int n) {
-	int i, chunk, num_threads;
+void seq_minima(int *array, int n, int choice) {
+	int i;
 	int Z[n];
 
 	// terminating case
 	if (n == 1) {
 		return;
 	}
-	chunk = CHUNK_SIZE;
-	num_threads = NUM_THREADS;
 
-	#pragma omp parallel for shared(Z, array, chunk, num_threads) \
-	private(i) schedule(static, chunk) num_threads(num_threads) 
-	{
-		for (i=0; i<n; i++) {
-			if (i%2 == 0) {
-				Z[i/2] = min(array[i], array[i+1]);
-			}
+	for (i=0; i<n; i++) {
+		if (i%2 == 0) {
+			Z[i/2] = min(array[i], array[i+1]);
 		}
 	}
-	// recursion
-	seq_suffix_minima(Z, n/2);
 
-	#pragma omp parallel for shared(Z, array, chunk, num_threads) \
-	private(i) schedule(static, chunk) num_threads(num_threads) 
-	{
+	// recursion
+	seq_minima(Z, n/2, choice);
+
+	if (choice == 1) {
+		for (i=1; i<n; i++) {
+			if (i%2 == 1) {
+				array[i] = Z[i/2];
+			} else {
+				array[i] = min(array[i], Z[i/2 - 1]);
+			}
+		}
+	} else {
 		for (i=n-2; i>=0; i--) {
 			if (i%2 == 0) {
 				array[i] = Z[i/2];
@@ -121,12 +122,24 @@ void seq_suffix_minima(int *array, int n) {
 			}
 		}
 	}
-	// debugging
-	// printf("result array:\n");
-	// print_array(array, n);
 }
 
-void seq_prefix_minima(int *array, int n) {
+void seq_function(int m, int show_output){
+	/* The code for sequential algorithm */
+	// Perform operations on B and C
+	seq_minima(B, m, 0);
+	if (show_output) {
+		printf("resulting suffix_minima array:\n");
+		print_array(B, file_size);
+	}
+	seq_minima(C, m, 1);
+	if (show_output) {
+		printf("resulting prefix_minima array:\n");
+		print_array(C, file_size);
+	}
+}		
+
+void openmp_minima(int *array, int n, int choice) {
 	int i, chunk, num_threads;
 	int Z[n];
 
@@ -147,37 +160,40 @@ void seq_prefix_minima(int *array, int n) {
 		}
 	}
 	// recursion
-	seq_prefix_minima(Z, n/2);
+	openmp_minima(Z, n/2, choice);
 
 	#pragma omp parallel for shared(Z, array, chunk, num_threads) \
 	private(i) schedule(static, chunk) num_threads(num_threads) 
-	{
-		for (i=1; i<n; i++) {
-			if (i%2 == 1) {
-				array[i] = Z[i/2];
-			} else {
-				array[i] = min(array[i], Z[i/2 - 1]);
+	{	
+		if (choice == 1) {
+			for (i=1; i<n; i++) {
+				if (i%2 == 1) {
+					array[i] = Z[i/2];
+				} else {
+					array[i] = min(array[i], Z[i/2 - 1]);
+				}
+			}
+		} else {
+			for (i=n-2; i>=0; i--) {
+				if (i%2 == 0) {
+					array[i] = Z[i/2];
+				} else {
+					array[i] = min(array[i], Z[i/2 + 1]);
+				}
 			}
 		}
 	}
-	// debugging
-	// printf("result array:\n");
-	// print_array(array, n);
 }
 
-void seq_function(int m, int show_output){
+void openmp_function(int m, int show_output){
 	/* The code for sequential algorithm */
 	// Perform operations on B and C
-	if (show_output) {
-		printf("initial array:\n");
-		print_array(A, file_size);
-	}
-	seq_suffix_minima(B, m);
+	openmp_minima(B, m, 0);
 	if (show_output) {
 		printf("resulting suffix_minima array:\n");
 		print_array(B, file_size);
 	}
-	seq_prefix_minima(C, m);
+	openmp_minima(C, m, 1);
 	if (show_output) {
 		printf("resulting prefix_minima array:\n");
 		print_array(C, file_size);
@@ -293,10 +309,14 @@ int main (int argc, char *argv[])
 	printf("Input array: \n");
 	print_array(A, data_length);
 
-	printf("Results for sequential algorithm (with OpenMP to parallelize the for loops):\n");
+	printf("Results for sequential algorithm:\n");
 	init(file_size);
 	seq_function(file_size, 1);
-	
+
+	printf("Results for openmp algorithm:\n");
+	init(file_size);
+	openmp_function(file_size, 1);
+
 	printf("Results for pthread algorithm:\n");
 	init(file_size);
 	par_function(file_size, 2);
@@ -315,7 +335,7 @@ int main (int argc, char *argv[])
    	pthread_attr_init(&attr);
    	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
-	printf("|NSize|Iterations|Seq|Th01|Th02|Th04|Th08|Par16|\n");
+	printf("|NSize|Iterations|Seq|OpenMP|Th01|Th02|Th04|Th08|Par16|\n");
 
 	// for each input size
 	for(c=0; c<NSIZE; c++){
@@ -333,6 +353,17 @@ int main (int argc, char *argv[])
 		result.tv_usec = (endt.tv_sec*1000000+endt.tv_usec) - (startt.tv_sec*1000000+startt.tv_usec);
 		printf(" %ld.%06ld | ", result.tv_usec/1000000, result.tv_usec%1000000);
 	
+		/* Run openmp algorithm */
+		result.tv_usec=0;
+		gettimeofday (&startt, NULL);
+		for (t=0; t<TIMES; t++) {
+			init(n);
+			openmp_function(n, 0);
+		}
+		gettimeofday (&endt, NULL);
+		result.tv_usec = (endt.tv_sec*1000000+endt.tv_usec) - (startt.tv_sec*1000000+startt.tv_usec);
+		printf(" %ld.%06ld | ", result.tv_usec/1000000, result.tv_usec%1000000);
+
 		/* Run threaded algorithm(s) */
 		for(nt=1; nt<NUM_THREADS; nt=nt<<1){
 		        if(pthread_barrier_init(&barr, NULL, nt+1))
