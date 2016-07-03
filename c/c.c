@@ -266,8 +266,7 @@ int main (int argc, char *argv[])
 		result.tv_usec = (endt.tv_sec*1000000+endt.tv_usec) - (startt.tv_sec*1000000+startt.tv_usec);
 		printf(" %ld.%06ld | ", result.tv_usec/1000000, result.tv_usec%1000000);
 
-
-		/* Run threaded algorithm(s) */
+		/* Run pthread algorithm(s) */
 		for(nt=1; nt<NUM_THREADS; nt=nt<<1){
 		        if(pthread_barrier_init(&barr, NULL, nt+1))
     			{

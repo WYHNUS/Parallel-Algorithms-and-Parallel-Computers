@@ -115,7 +115,7 @@ void opt_seq_merge(int *A, int*B, int *C, int si_A, int ei_A, int si_B, int ei_B
 	}
 }
 
-void seq_function(int *A, int *B, int *C, int A_length, int B_length) {
+void openmp_function(int *A, int *B, int *C, int A_length, int B_length) {
 	/* The code for sequential algorithm */
 	int i, chunk, num_threads;
 	chunk = CHUNK_SIZE;
@@ -247,16 +247,23 @@ int main (int argc, char *argv[])
   	result.tv_usec= 0;
 
 	/* Test Correctness */
+	printf("Test for correctness:\n");
+
 	read_file("test01_A.in", A, &vector_A_size);
 	read_file("test01_B.in", B, &vector_B_size);
-	printf("Test for correctness:\n");
-	init(vector_A_size + vector_B_size);
-	seq_function(A, B, C, vector_A_size, vector_B_size);
 	printf("Array A:\n");
 	print_array(A, vector_A_size);
 	printf("Array B:\n");
 	print_array(B, vector_B_size);
-	printf("Result after merging for sequential algorithm (with OpenMP to parallelize the for loops):\n");
+
+	printf("Result after merging for sequential algorithm:\n");
+	init(vector_A_size + vector_B_size);
+	opt_seq_merge(A, B, C, 0, vector_A_size, 0, vector_B_size);
+	print_array(C, vector_A_size + vector_B_size);
+
+	printf("Result after merging for openmp algorithm:\n");
+	init(vector_A_size + vector_B_size);
+	openmp_function(A, B, C, vector_A_size, vector_B_size);
 	print_array(C, vector_A_size + vector_B_size);
 	
 	printf("Results for pthread algorithm:\n");
@@ -275,7 +282,7 @@ int main (int argc, char *argv[])
    	pthread_attr_init(&attr);
    	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
-	printf("|NSize|Iterations|Seq|Th01|Th02|Th04|Th08|Par16|\n");
+	printf("|NSize|Iterations|Seq|OpenMP|Th01|Th02|Th04|Th08|Par16|\n");
 
 	// for each input size
 	for(c=0; c<NSIZE; c++){
@@ -287,13 +294,24 @@ int main (int argc, char *argv[])
 		gettimeofday (&startt, NULL);
 		for (t=0; t<TIMES; t++) {
 			init(n);
-			seq_function(A, B, C, n/2, n/2); 
+			opt_seq_merge(A, B, C, 0, vector_A_size, 0, vector_B_size);
 		}
 		gettimeofday (&endt, NULL);
 		result.tv_usec = (endt.tv_sec*1000000+endt.tv_usec) - (startt.tv_sec*1000000+startt.tv_usec);
 		printf(" %ld.%06ld | ", result.tv_usec/1000000, result.tv_usec%1000000);
 
-		/* Run threaded algorithm(s) */
+		/* Run OpenMP algorithm */
+		result.tv_usec=0;
+		gettimeofday (&startt, NULL);
+		for (t=0; t<TIMES; t++) {
+			init(n);
+			openmp_function(A, B, C, n/2, n/2); 
+		}
+		gettimeofday (&endt, NULL);
+		result.tv_usec = (endt.tv_sec*1000000+endt.tv_usec) - (startt.tv_sec*1000000+startt.tv_usec);
+		printf(" %ld.%06ld | ", result.tv_usec/1000000, result.tv_usec%1000000);
+
+		/* Run pthread algorithm(s) */
 		for(nt=1; nt<NUM_THREADS; nt=nt<<1){
 		        if(pthread_barrier_init(&barr, NULL, nt+1))
     			{
