@@ -240,3 +240,29 @@ git push origin master
 exit
 ssh yanhaowang@TUD277869.ws.tudelft.net
 exit
+ls
+git pull origin master
+git status
+ls
+cd b
+ls
+gcc b.c
+vim b.c 
+gcc b.c
+gcc -pthread b.c 
+gcc -pthread b.c -lm
+./a.out 
+ls
+cd ..
+git status
+git commit -a -m "enable OMP and pthread"
+git push origin master
+exit
+ssh yanhaowang@TUD277869.ws.tudelft.net
+exit
+ssh yanhaowang@TUD277869.ws.tudelft.net
+ls
+git pull origin master
+clear
+ssh yanhaowang@TUD277869.ws.tudelft.net
+exit

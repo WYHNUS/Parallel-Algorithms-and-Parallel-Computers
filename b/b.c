@@ -204,7 +204,7 @@ void par_function(int *A, int *B, int *C, int A_length, int B_length, int nt){
 	sa[num_part] = A_length; sb[num_part] = B_length;
 
 	// parallelize the original for loop
-	for (j=1; j<=/*NUMTHRDS*/nt; j++)
+	for (j=1; j<=nt; j++)
 	{
 		x[j].id = j; 
 		x[j].nrT=nt; // number of threads in this round
@@ -220,19 +220,19 @@ void par_function(int *A, int *B, int *C, int A_length, int B_length, int nt){
 	}
 
 	/* Wait on the other threads */
-	for(j=0; j</*NUMTHRDS*/nt; j++)
+	for(j=0; j<nt; j++)
 	{
 		pthread_join(callThd[j], &status);
 	}
 
 	// parallelize the original for loop
-	for (j=1; j<=/*NUMTHRDS*/nt; j++)
+	for (j=1; j<=nt; j++)
 	{
 		pthread_create(&callThd[j-1], &attr, par_merge, (void *)&x[j]);
 	}
 
 	/* Wait on the other threads */
-	for(j=0; j</*NUMTHRDS*/nt; j++)
+	for(j=0; j<nt; j++)
 	{
 		pthread_join(callThd[j], &status);
 	}
@@ -268,7 +268,7 @@ int main (int argc, char *argv[])
 	
 	printf("Results for pthread algorithm:\n");
 	init(vector_A_size + vector_B_size);
-	par_function(A, B, C, vector_A_size, vector_B_size, 2);
+	par_function(A, B, C, vector_A_size, vector_B_size, 3);
 	print_array(C, vector_A_size + vector_B_size);
 
 	/* Generate a seed input */

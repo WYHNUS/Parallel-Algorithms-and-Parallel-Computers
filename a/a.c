@@ -307,7 +307,7 @@ int main (int argc, char *argv[])
 
 	read_file("test01.in");
 	printf("Input array: \n");
-	print_array(A, data_length);
+	print_array(A, file_size);
 
 	printf("Results for sequential algorithm:\n");
 	init(file_size);
