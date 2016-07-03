@@ -75,7 +75,31 @@ void init(int n){
 	}
 }
 
-void seq_function(int n){
+void seq_function(int n) {
+ 	/* The code for sequential algorithm */
+ 	int i, not_finish;
+ 	for (i=0; i<n; i++) {
+		if (S[i] == 0) {
+			R[i] = 0;	// root
+		} else {
+			R[i] = 1;
+		}
+	}
+
+ 	not_finish = 1;
+ 	while (not_finish) {
+ 		not_finish = 0;
+ 		for (i=1; i<data_length; i++) {
+ 			if (S[i] != 0) {	// not root
+ 				R[i] += R[S[i]];
+ 				S[i] = S[S[i]];
+ 				not_finish = 1; 
+ 			}
+ 		}
+ 	}
+}
+
+void openmp_function(int n){
 	/* The code for sequential algorithm */
 	int i, j, chunk, num_threads;
 	chunk = CHUNK_SIZE;
@@ -183,13 +207,19 @@ int main (int argc, char *argv[])
 
 	/* Test Correctness */
 	printf("Test for correctness:\n");
+
 	read_file("test01.in");
 	printf("Input array: (ignore leading 0)\n");
 	print_array(A, data_length);
-	
+
 	printf("Results for sequential algorithm: (ignore leading 0)\n");
 	init(data_length);
 	seq_function(data_length);
+	print_array(R, data_length);
+
+	printf("Results for openmp algorithm: (ignore leading 0)\n");
+	init(data_length);
+	openmp_function(data_length);
 	print_array(R, data_length);
 
 	printf("Results for pthread algorithm: (ignore leading 0)\n");
@@ -207,7 +237,7 @@ int main (int argc, char *argv[])
    	pthread_attr_init(&attr);
    	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
-	printf("|NSize|Iterations|Seq|Th01|Th02|Th04|Th08|Par16|\n");
+	printf("|NSize|Iterations|Seq|OpenMP|Th01|Th02|Th04|Th08|Par16|\n");
 
 	// for each input size
 	for(c=0; c<NSIZE; c++){
@@ -224,6 +254,18 @@ int main (int argc, char *argv[])
 		gettimeofday (&endt, NULL);
 		result.tv_usec = (endt.tv_sec*1000000+endt.tv_usec) - (startt.tv_sec*1000000+startt.tv_usec);
 		printf(" %ld.%06ld | ", result.tv_usec/1000000, result.tv_usec%1000000);
+
+		/* Run OpenMP algorithm */
+		result.tv_usec=0;
+		gettimeofday (&startt, NULL);
+		for (t=0; t<TIMES; t++) {
+			init(n);
+			openmp_function(n);
+		}
+		gettimeofday (&endt, NULL);
+		result.tv_usec = (endt.tv_sec*1000000+endt.tv_usec) - (startt.tv_sec*1000000+startt.tv_usec);
+		printf(" %ld.%06ld | ", result.tv_usec/1000000, result.tv_usec%1000000);
+
 
 		/* Run threaded algorithm(s) */
 		for(nt=1; nt<NUM_THREADS; nt=nt<<1){

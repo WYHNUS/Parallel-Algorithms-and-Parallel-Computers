@@ -287,11 +287,16 @@ int main (int argc, char *argv[])
   	result.tv_usec= 0;
 
   	/* Test Correctness */
-	read_file("test01.in");
 	printf("Test for correctness:\n");
+
+	read_file("test01.in");
+	printf("Input array: \n");
+	print_array(A, data_length);
+
 	printf("Results for sequential algorithm (with OpenMP to parallelize the for loops):\n");
 	init(file_size);
 	seq_function(file_size, 1);
+	
 	printf("Results for pthread algorithm:\n");
 	init(file_size);
 	par_function(file_size, 2);
