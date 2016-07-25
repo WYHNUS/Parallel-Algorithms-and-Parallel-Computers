@@ -21,17 +21,17 @@
 int Ns[NSIZE] = {4096, 8192, 16384, 32768, 65536, 131072, 262144};   
 
 typedef struct __ThreadArg {
-  int id;
-  int nrT;
-  int n;
-  int *A;
-  int *B;
-  int *C;
-  int B_length;
-  int *sa;
-  int *sb;
-  int part_size;
-  int num_part;
+	int id;
+	int nrT;
+	int n;
+	int *A;
+	int *B;
+	int *C;
+	int B_length;
+	int *sa;
+	int *sb;
+	int part_size;
+	int num_part;
 } tThreadArg;
 
 pthread_t callThd[NUM_THREADS];
@@ -120,7 +120,7 @@ void openmp_function(int *A, int *B, int *C, int A_length, int B_length) {
 	int i, chunk, num_threads;
 	chunk = CHUNK_SIZE;
 	num_threads = NUM_THREADS;
-	
+
 	int num_part = log2(A_length);
 	int part_size = A_length/num_part;
 	int sa[num_part+1];
@@ -128,21 +128,17 @@ void openmp_function(int *A, int *B, int *C, int A_length, int B_length) {
 	sa[0] = 0; sb[0] = 0; 
 	sa[num_part] = A_length; sb[num_part] = B_length;
 
-	#pragma omp parallel for shared(A, sa, sb, chunk, num_threads) \
+#pragma omp parallel for shared(A, sa, sb, chunk, num_threads) \
 	private(i) schedule(static, chunk) num_threads(num_threads) 
-	{
-		for (i=1; i<num_part; i++) {
-			sa[i] = sa[i-1] + part_size;
-			sb[i] = get_rank(A[i*part_size-1], B, 0, B_length);
-		}
+	for (i=1; i<num_part; i++) {
+		sa[i] = sa[i-1] + part_size;
+		sb[i] = get_rank(A[i*part_size-1], B, 0, B_length);
 	}
 
-	#pragma omp parallel for shared(A, B, C, sa, sb, chunk, num_threads) \
+#pragma omp parallel for shared(A, B, C, sa, sb, chunk, num_threads) \
 	private(i) schedule(static, chunk) num_threads(num_threads) 
-	{
-		for (i=0; i<num_part; i++) {
-			opt_seq_merge(A, B, C, sa[i], sa[i+1], sb[i], sb[i+1]);
-		}
+	for (i=0; i<num_part; i++) {
+		opt_seq_merge(A, B, C, sa[i], sa[i+1], sb[i], sb[i+1]);
 	}
 }
 
@@ -177,7 +173,7 @@ void *par_merge(void *par_arg) {
 	int i, j, num_part, ele_per_td, si, ei;
 	int *sa = thread_arg->sa;
 	int *sb = thread_arg->sb;
-	
+
 	j = thread_arg->id;
 	num_part = thread_arg->num_part;
 
@@ -193,7 +189,7 @@ void *par_merge(void *par_arg) {
 void par_function(int *A, int *B, int *C, int A_length, int B_length, int nt){
 	/* The code for threaded computation */
 	void *status;
-  	tThreadArg x[NUM_THREADS];
+	tThreadArg x[NUM_THREADS];
 
 	int j;
 	int num_part = log2(A_length);
@@ -240,11 +236,11 @@ void par_function(int *A, int *B, int *C, int A_length, int B_length, int nt){
 
 int main (int argc, char *argv[])
 {
-  	struct timeval startt, endt, result;
+	struct timeval startt, endt, result;
 	int i, j, k, nt, t, n, c;
-	
-  	result.tv_sec = 0;
-  	result.tv_usec= 0;
+
+	result.tv_sec = 0;
+	result.tv_usec= 0;
 
 	/* Test Correctness */
 	printf("Test for correctness:\n");
@@ -265,7 +261,7 @@ int main (int argc, char *argv[])
 	init(vector_A_size + vector_B_size);
 	openmp_function(A, B, C, vector_A_size, vector_B_size);
 	print_array(C, vector_A_size + vector_B_size);
-	
+
 	printf("Results for pthread algorithm:\n");
 	init(vector_A_size + vector_B_size);
 	par_function(A, B, C, vector_A_size, vector_B_size, 3);
@@ -278,9 +274,9 @@ int main (int argc, char *argv[])
 		B[k] = 2*k;
 	}
 
-   	/* Initialize and set thread detached attribute */
-   	pthread_attr_init(&attr);
-   	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+	/* Initialize and set thread detached attribute */
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
 	printf("|NSize|Iterations|Seq|OpenMP|Th01|Th02|Th04|Th08|Par16|\n");
 
@@ -313,15 +309,15 @@ int main (int argc, char *argv[])
 
 		/* Run pthread algorithm(s) */
 		for(nt=1; nt<NUM_THREADS; nt=nt<<1){
-		        if(pthread_barrier_init(&barr, NULL, nt+1))
-    			{
-        			printf("Could not create a barrier\n");
-			        return -1;
+			if(pthread_barrier_init(&barr, NULL, nt+1))
+			{
+				printf("Could not create a barrier\n");
+				return -1;
 			}
-		        if(pthread_barrier_init(&internal_barr, NULL, nt))
-    			{
-        			printf("Could not create a barrier\n");
-			        return -1;
+			if(pthread_barrier_init(&internal_barr, NULL, nt))
+			{
+				printf("Could not create a barrier\n");
+				return -1;
 			}
 
 			result.tv_sec=0; result.tv_usec=0;
@@ -336,14 +332,14 @@ int main (int argc, char *argv[])
 			gettimeofday (&endt, NULL);
 
 			if (pthread_barrier_destroy(&barr)) {
-        			printf("Could not destroy the barrier\n");
-			        return -1;
+				printf("Could not destroy the barrier\n");
+				return -1;
 			}
 			if (pthread_barrier_destroy(&internal_barr)) {
-        			printf("Could not destroy the barrier\n");
-			        return -1;
+				printf("Could not destroy the barrier\n");
+				return -1;
 			}
-   			result.tv_usec += (endt.tv_sec*1000000+endt.tv_usec) - (startt.tv_sec*1000000+startt.tv_usec);
+			result.tv_usec += (endt.tv_sec*1000000+endt.tv_usec) - (startt.tv_sec*1000000+startt.tv_usec);
 			printf(" %ld.%06ld | ", result.tv_usec/1000000, result.tv_usec%1000000);
 		}
 		printf("\n");

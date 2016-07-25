@@ -266,3 +266,173 @@ git pull origin master
 clear
 ssh yanhaowang@TUD277869.ws.tudelft.net
 exit
+ls
+git pull origin master
+git status
+cd a
+gcc -pthread a.c
+vim a.c
+gcc -pthread a.c
+./a.out 
+cd ..
+cd b
+ls
+gcc -pthread b.c 
+gcc -pthread b.c -lm
+./a.out
+cd ..
+cd c/
+gcc -pthread c.c -lm
+vim c.c 
+gcc -pthread c.c -lm
+vim c.c 
+gcc -pthread c.c -lm
+vim c.c 
+gcc -pthread c.c -lm
+./a.out 
+vim c.c 
+gcc -pthread c.c -lm
+./a.out 
+vim c.c 
+gcc -pthread c.c -lm
+./a.out 
+cd ..
+b
+cd b
+vim b.c 
+cd ..
+cd c
+vim c.c 
+gcc -pthread c.c -lm
+./a.out 
+vim c.c 
+gcc -pthread c.c -lm
+./a.out 
+rm a.out 
+gcc -pthread c.c -lm
+./a.out 
+vim c.c 
+gcc -pthread c.c -lm
+./a.out 
+vim c.c 
+gcc -pthread c.c -lm
+./a.out 
+vim a.out 
+vim c.c 
+gcc -pthread c.c -lm
+./a.out 
+vim c.c 
+gcc -pthread c.c -lm
+./a.out 
+vim c.c 
+gcc -pthread c.c -lm
+./a.out 
+vim c.c 
+gcc -pthread c.c -lm
+./a.out 
+vim c.c 
+gcc -pthread c.c -lm
+./a.out 
+vim c.c 
+gcc -pthread c.c -lm
+./a.out 
+cd ..
+cd b
+vim b.c 
+cd ..
+cd c
+vim c.c 
+cd ../b
+ls
+rm a.out 
+gcc -pthread b.c -lm
+./a.out 
+vim b.c 
+gcc -pthread b.c -lm
+./a.out 
+vim b.c 
+gcc -pthread b.c -lm
+./a.out 
+vim b.c 
+gcc -pthread b.c -lm
+./a.out 
+vim b.c 
+gcc -pthread b.c -lm
+./a.out 
+vim b.c 
+cd ..
+cd c/
+vim c.c 
+./a.out 
+vim c.c 
+gcc -pthread c.c -ml
+gcc -pthread c.c -lm
+./a.out 
+vim c.c 
+gcc -pthread c.c -lm
+./a.out 
+vim c.c 
+gcc -pthread c.c -lm
+./a.out 
+vim c.c 
+gcc -pthread c.c -lm
+./a.out 
+vim c.c 
+gcc -pthread c.c -lm
+./a.out 
+vim c.c 
+gcc -pthread c.c -lm
+./a.out 
+vim c.c 
+gcc -pthread c.c -lm
+./a.out 
+vim c.c 
+gcc -pthread c.c -lm
+./a.out 
+vim c.c 
+gcc -pthread c.c -lm
+./a.out 
+vim c.c 
+gcc -pthread c.c -lm
+vim c.c 
+gcc -pthread c.c -lm
+./a.out 
+vim c.c 
+gcc -pthread c.c -lm
+./a.out 
+cd ..
+cd b
+vim b.c 
+gcc -pthread b.c -lm
+./a.out 
+vim b.c 
+gcc -pthread b.c -lm
+./a.out 
+vim b.c 
+gcc -pthread b.c -lm
+./a.out 
+vim b.c 
+clear
+gcc -pthread b.c -lm
+./a.out 
+vim b.c 
+gcc -pthread b.c -lm
+./a.out 
+vim b.c 
+gcc -pthread b.c -lm
+./a.out 
+vim b.c 
+gcc -pthread b.c -lm
+./a.out 
+vim b.c 
+gcc -pthread b.c -lm
+./a.out 
+gcc -pthread b.c -lm
+./a.out 
+cd ..
+git status
+git commit -a -m "fix all bugs and finalize"
+git push origin master
+exit
+ssh yanhaowang@TUD277869.ws.tudelft.net
+exit

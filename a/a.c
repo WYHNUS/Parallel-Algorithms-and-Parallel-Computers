@@ -21,14 +21,14 @@
 int Ns[NSIZE] = {4096, 8192, 16384, 32768, 65536, 131072, 262144};   
 
 typedef struct __ThreadArg {
-  int id;
-  int nrT;
-  int n;
-  int choice;
-  int start_index;
-  int end_index;
-  int* src;
-  int* result;
+	int id;
+	int nrT;
+	int n;
+	int choice;
+	int start_index;
+	int end_index;
+	int* src;
+	int* result;
 } tThreadArg;
 
 pthread_t callThd[NUM_THREADS];
@@ -150,39 +150,39 @@ void openmp_minima(int *array, int n, int choice) {
 	chunk = CHUNK_SIZE;
 	num_threads = NUM_THREADS;
 
-	#pragma omp parallel for shared(Z, array, chunk, num_threads) \
+#pragma omp parallel for shared(Z, array, chunk, num_threads) \
 	private(i) schedule(static, chunk) num_threads(num_threads) 
-	{
-		for (i=0; i<n; i++) {
-			if (i%2 == 0) {
-				Z[i/2] = min(array[i], array[i+1]);
-			}
+	for (i=0; i<n; i++) {
+		if (i%2 == 0) {
+			Z[i/2] = min(array[i], array[i+1]);
 		}
 	}
+
 	// recursion
 	openmp_minima(Z, n/2, choice);
 
-	#pragma omp parallel for shared(Z, array, chunk, num_threads) \
-	private(i) schedule(static, chunk) num_threads(num_threads) 
-	{	
-		if (choice == 1) {
-			for (i=1; i<n; i++) {
-				if (i%2 == 1) {
-					array[i] = Z[i/2];
-				} else {
-					array[i] = min(array[i], Z[i/2 - 1]);
-				}
+	if (choice == 1) {
+#pragma omp parallel for shared(Z, array, chunk, num_threads) \
+		private(i) schedule(static, chunk) num_threads(num_threads) 
+		for (i=1; i<n; i++) {
+			if (i%2 == 1) {
+				array[i] = Z[i/2];
+			} else {
+				array[i] = min(array[i], Z[i/2 - 1]);
 			}
-		} else {
-			for (i=n-2; i>=0; i--) {
-				if (i%2 == 0) {
-					array[i] = Z[i/2];
-				} else {
-					array[i] = min(array[i], Z[i/2 + 1]);
-				}
+		}
+	} else {
+#pragma omp parallel for shared(Z, array, chunk, num_threads) \
+		private(i) schedule(static, chunk) num_threads(num_threads) 
+		for (i=n-2; i>=0; i--) {
+			if (i%2 == 0) {
+				array[i] = Z[i/2];
+			} else {
+				array[i] = min(array[i], Z[i/2 + 1]);
 			}
 		}
 	}
+
 }
 
 void openmp_function(int m, int show_output){
@@ -249,7 +249,7 @@ void par_minima(int *array, int n, int nt, int choice) {
 	int i, j, ele_per_td;
 	int Z[n];
 	void *status;
-  	tThreadArg x[NUM_THREADS];
+	tThreadArg x[NUM_THREADS];
 
 	// terminating case
 	if (n == 1) {
@@ -296,13 +296,13 @@ void par_function(int num_ele, int num_threads) {
 
 int main (int argc, char *argv[])
 {
-  	struct timeval startt, endt, result;
+	struct timeval startt, endt, result;
 	int i, j, k, nt, t, n, c;
-	
-  	result.tv_sec = 0;
-  	result.tv_usec= 0;
 
-  	/* Test Correctness */
+	result.tv_sec = 0;
+	result.tv_usec= 0;
+
+	/* Test Correctness */
 	printf("Test for correctness:\n");
 
 	read_file("test01.in");
@@ -331,9 +331,9 @@ int main (int argc, char *argv[])
 		A[k] = rand();
 	}
 
-   	/* Initialize and set thread detached attribute */
-   	pthread_attr_init(&attr);
-   	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+	/* Initialize and set thread detached attribute */
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
 	printf("|NSize|Iterations|Seq|OpenMP|Th01|Th02|Th04|Th08|Par16|\n");
 
@@ -352,7 +352,7 @@ int main (int argc, char *argv[])
 		gettimeofday (&endt, NULL);
 		result.tv_usec = (endt.tv_sec*1000000+endt.tv_usec) - (startt.tv_sec*1000000+startt.tv_usec);
 		printf(" %ld.%06ld | ", result.tv_usec/1000000, result.tv_usec%1000000);
-	
+
 		/* Run OpenMP algorithm */
 		result.tv_usec=0;
 		gettimeofday (&startt, NULL);
@@ -366,15 +366,15 @@ int main (int argc, char *argv[])
 
 		/* Run pthread algorithm(s) */
 		for(nt=1; nt<NUM_THREADS; nt=nt<<1){
-		        if(pthread_barrier_init(&barr, NULL, nt+1))
-    			{
-        			printf("Could not create a barrier\n");
-			        return -1;
+			if(pthread_barrier_init(&barr, NULL, nt+1))
+			{
+				printf("Could not create a barrier\n");
+				return -1;
 			}
-		        if(pthread_barrier_init(&internal_barr, NULL, nt))
-    			{
-        			printf("Could not create a barrier\n");
-			        return -1;
+			if(pthread_barrier_init(&internal_barr, NULL, nt))
+			{
+				printf("Could not create a barrier\n");
+				return -1;
 			}
 
 			result.tv_sec=0; 
@@ -390,14 +390,14 @@ int main (int argc, char *argv[])
 			gettimeofday (&endt, NULL);
 
 			if (pthread_barrier_destroy(&barr)) {
-        			printf("Could not destroy the barrier\n");
-			        return -1;
+				printf("Could not destroy the barrier\n");
+				return -1;
 			}
 			if (pthread_barrier_destroy(&internal_barr)) {
-        			printf("Could not destroy the barrier\n");
-			        return -1;
+				printf("Could not destroy the barrier\n");
+				return -1;
 			}
-   			result.tv_usec += (endt.tv_sec*1000000+endt.tv_usec) - (startt.tv_sec*1000000+startt.tv_usec);
+			result.tv_usec += (endt.tv_sec*1000000+endt.tv_usec) - (startt.tv_sec*1000000+startt.tv_usec);
 			printf(" %ld.%06ld | ", result.tv_usec/1000000, result.tv_usec%1000000);
 		}
 		printf("\n");

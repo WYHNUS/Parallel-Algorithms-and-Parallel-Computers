@@ -94,19 +94,19 @@ void seq_function(int n) {
 			}
 		}
 	}
-/*
-	not_finish = 1;
-	while (not_finish) {
-		not_finish = 0;
-		for (i=1; i<data_length; i++) {
-			if (S[i] != 0) {	// not root
-				R[i] += R[S[i]];
-				S[i] = S[S[i]];
-				not_finish = 1; 
-			}
-		}
-	}
-*/
+	/*
+	   not_finish = 1;
+	   while (not_finish) {
+	   not_finish = 0;
+	   for (i=1; i<data_length; i++) {
+	   if (S[i] != 0) {	// not root
+	   R[i] += R[S[i]];
+	   S[i] = S[S[i]];
+	   not_finish = 1; 
+	   }
+	   }
+	   }
+	 */
 }
 
 void openmp_function(int n){
@@ -117,34 +117,32 @@ void openmp_function(int n){
 
 #pragma omp parallel for shared(S, R) private(i) \
 	schedule(static, chunk) num_threads(num_threads)
-	{
-		for (i=0; i<n; i++) {
-			if (S[i] == 0) {
-				R[i] = 0;	// root
-			} else {
-				R[i] = 1;
-			}
+	for (i=0; i<n; i++) {
+		if (S[i] == 0) {
+			R[i] = 0;	// root
+		} else {
+			R[i] = 1;
 		}
 	}
+
 
 	for (i=0; i<log2(n); i++) {
 #pragma omp parallel for shared(S, R, i) private(j) \
 		schedule(static, chunk) num_threads(num_threads)
-		{
-			for (j=1; j<n; j++) {
-				if (S[j] != 0) {	// not root
-					R[j] += R[S[j]];
-					S[j] = S[S[j]];
-				}
+		for (j=1; j<n; j++) {
+			if (S[j] != 0) {	// not root
+				R[j] += R[S[j]];
+				S[j] = S[S[j]];
 			}
 		}
+
 	}
 }
 
 void *init_dist(void *par_arg) {
 	tThreadArg *thread_arg;
 	int i;
-	
+
 	thread_arg = (tThreadArg *)par_arg;
 	int size = (int)(thread_arg->n / thread_arg->nrT);
 	int si = size * (thread_arg->id - 1) + 1;
@@ -169,7 +167,7 @@ void *search_root(void *par_arg) {
 	int ei = size * thread_arg->id + 1;
 	int *S = thread_arg->S;
 	int *R = thread_arg->R;
-	
+
 	for (j=si; j<ei; j++) {	
 		if (S[j] != 0) {	// not root
 			R[j] += R[S[j]];
@@ -200,7 +198,7 @@ void par_function(int n, int nt){
 	{
 		pthread_join(callThd[j], &status);
 	}
-	
+
 	for (i=0; i<log2(n); i++) {
 		for (j=1; j<=nt; j++)
 		{
