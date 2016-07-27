@@ -81,9 +81,12 @@ void init(int n) {
 }
 
 // v: value, A: array, si: start_index, ei: end_index
-int get_rank(int v, int *A, int si, int ei) {
+int get_rank(int v, int *A, int si, int ei, int maxindex) {
 	// binary search
 	if (si == ei) {
+		if (si == maxindex) {
+			return maxindex;
+		}
 		if (A[si] <= v) {
 			return si+1;
 		} else {
@@ -92,12 +95,25 @@ int get_rank(int v, int *A, int si, int ei) {
 	} else {
 		int ci = (si + ei) / 2;
 		if (A[ci] > v) {
-			return get_rank(v, A, si, ci-1);
+			return get_rank(v, A, si, ci, maxindex);
 		} else {
-			return get_rank(v, A, ci+1, ei);
+			return get_rank(v, A, ci+1, ei, maxindex);
 		}
 	}
 }
+
+// void seq_merge(int *A, int *B, int *C, int A_length, int B_length) {
+// 	int i, cur_rank;
+
+// 	for (i=0; i<A_length; i++) {
+// 		cur_rank = get_rank(A[i], B, 0, B_length, B_length);
+// 		C[cur_rank + i] = A[i];
+// 	}
+// 	for (i=0; i<B_length; i++) {
+// 		cur_rank = get_rank(B[i], A, 0, A_length, A_length);
+// 		C[cur_rank + i] = B[i];
+// 	}
+// }
 
 // si: start_index; ei: end_index
 void opt_seq_merge(int *A, int*B, int *C, int si_A, int ei_A, int si_B, int ei_B) {

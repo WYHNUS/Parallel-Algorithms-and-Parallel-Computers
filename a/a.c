@@ -139,7 +139,7 @@ void seq_function(int m, int show_output){
 	}
 }		
 
-void openmp_minima(int *array, int n, int choice) {
+void openmp_minima(int *array, int n, int choice, int nt) {
 	int i, chunk, num_threads;
 	int Z[n];
 
@@ -185,15 +185,15 @@ void openmp_minima(int *array, int n, int choice) {
 
 }
 
-void openmp_function(int m, int show_output){
+void openmp_function(int m, int show_output, int nt){
 	/* The code for sequential algorithm */
 	// Perform operations on B and C
-	openmp_minima(B, m, 0);
+	openmp_minima(B, m, 0, nt);
 	if (show_output) {
 		printf("resulting suffix_minima array:\n");
 		print_array(B, file_size);
 	}
-	openmp_minima(C, m, 1);
+	openmp_minima(C, m, 1, nt);
 	if (show_output) {
 		printf("resulting prefix_minima array:\n");
 		print_array(C, file_size);
@@ -315,7 +315,7 @@ int main (int argc, char *argv[])
 
 	printf("Results for openmp algorithm:\n");
 	init(file_size);
-	openmp_function(file_size, 1);
+	openmp_function(file_size, 1, 2);
 
 	printf("Results for pthread algorithm:\n");
 	init(file_size);
@@ -331,11 +331,8 @@ int main (int argc, char *argv[])
 		A[k] = rand();
 	}
 
-	/* Initialize and set thread detached attribute */
-	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-
-	printf("|NSize|Iterations|Seq|OpenMP|Th01|Th02|Th04|Th08|Par16|\n");
+	printf("OpenMP:\n");
+	printf("|NSize|Iterations| Seq | Th01 | Th02 | Th04 | Th08 | Par16|\n");
 
 	// for each input size
 	for(c=0; c<NSIZE; c++){
@@ -354,11 +351,40 @@ int main (int argc, char *argv[])
 		printf(" %ld.%06ld | ", result.tv_usec/1000000, result.tv_usec%1000000);
 
 		/* Run OpenMP algorithm */
+		for(nt=1; nt<NUM_THREADS; nt=nt<<1){
+			result.tv_sec=0; 
+			result.tv_usec=0;
+			gettimeofday (&startt, NULL);
+			for (t=0; t<TIMES; t++) 
+			{
+				init(n);
+				openmp_function(n, 0, nt);
+			}
+			gettimeofday (&endt, NULL);
+			result.tv_usec += (endt.tv_sec*1000000+endt.tv_usec) - (startt.tv_sec*1000000+startt.tv_usec);
+			printf(" %ld.%06ld | ", result.tv_usec/1000000, result.tv_usec%1000000);
+		}
+		printf("\n");
+	}
+
+	/* Initialize and set thread detached attribute */
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+	printf("Pthread:\n");
+	printf("|NSize|Iterations| Seq | Th01 | Th02 | Th04 | Th08 | Par16|\n");
+
+	// for each input size
+	for(c=0; c<NSIZE; c++){
+		n=Ns[c];
+		printf("| %d | %d |",n,TIMES);
+
+		/* Run sequential algorithm */
 		result.tv_usec=0;
 		gettimeofday (&startt, NULL);
 		for (t=0; t<TIMES; t++) {
 			init(n);
-			openmp_function(n, 0);
+			seq_function(n, 0);
 		}
 		gettimeofday (&endt, NULL);
 		result.tv_usec = (endt.tv_sec*1000000+endt.tv_usec) - (startt.tv_sec*1000000+startt.tv_usec);
