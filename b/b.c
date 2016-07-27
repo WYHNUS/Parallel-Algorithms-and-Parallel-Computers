@@ -115,6 +115,25 @@ void opt_seq_merge(int *A, int*B, int *C, int si_A, int ei_A, int si_B, int ei_B
 	}
 }
 
+void seq_merge(int *A, int *B, int *C, int A_length, int B_length) {
+	int i;
+	int num_part = log2(A_length);
+	int part_size = A_length/num_part;
+	int sa[num_part+1];
+	int sb[num_part+1];
+	sa[0] = 0; sb[0] = 0; 
+	sa[num_part] = A_length; sb[num_part] = B_length;
+
+	for (i=1; i<num_part; i++) {
+		sa[i] = sa[i-1] + part_size;
+		sb[i] = get_rank(A[i*part_size-1], B, 0, B_length);
+	}
+
+	for (i=0; i<num_part; i++) {
+		opt_seq_merge(A, B, C, sa[i], sa[i+1], sb[i], sb[i+1]);
+	}
+}
+
 void openmp_function(int *A, int *B, int *C, int A_length, int B_length) {
 	/* The code for sequential algorithm */
 	int i, chunk, num_threads;
@@ -254,7 +273,7 @@ int main (int argc, char *argv[])
 
 	printf("Result after merging for sequential algorithm:\n");
 	init(vector_A_size + vector_B_size);
-	opt_seq_merge(A, B, C, 0, vector_A_size, 0, vector_B_size);
+	seq_merge(A, B, C, vector_A_size, vector_B_size);
 	print_array(C, vector_A_size + vector_B_size);
 
 	printf("Result after merging for openmp algorithm:\n");
