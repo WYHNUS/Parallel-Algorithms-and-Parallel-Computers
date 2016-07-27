@@ -6,9 +6,6 @@
 #include <math.h>
 #include <sys/time.h>
 
-// Number of threads
-#define NUM_THREADS 32
-
 //OpenMP chunk size
 #define CHUNK_SIZE 128
 
@@ -139,8 +136,8 @@ void seq_function(int m, int show_output){
 	}
 }		
 
-void openmp_minima(int *array, int n, int choice, int nt) {
-	int i, chunk, num_threads;
+void openmp_minima(int *array, int n, int choice, int num_threads) {
+	int i, chunk;
 	int Z[n];
 
 	// terminating case
@@ -148,7 +145,6 @@ void openmp_minima(int *array, int n, int choice, int nt) {
 		return;
 	}
 	chunk = CHUNK_SIZE;
-	num_threads = NUM_THREADS;
 
 #pragma omp parallel for shared(Z, array, chunk, num_threads) \
 	private(i) schedule(static, chunk) num_threads(num_threads) 

@@ -6,9 +6,6 @@
 #include <math.h>
 #include <sys/time.h>
 
-// Number of threads
-#define NUM_THREADS 32
-
 //OpenMP chunk size
 #define CHUNK_SIZE 128
 
@@ -150,11 +147,10 @@ void seq_merge(int *A, int *B, int *C, int A_length, int B_length) {
 	}
 }
 
-void openmp_function(int *A, int *B, int *C, int A_length, int B_length) {
+void openmp_function(int *A, int *B, int *C, int A_length, int B_length, int num_threads) {
 	/* The code for sequential algorithm */
-	int i, chunk, num_threads;
+	int i, chunk;
 	chunk = CHUNK_SIZE;
-	num_threads = NUM_THREADS;
 
 	int num_part = log2(A_length);
 	int part_size = A_length/num_part;
@@ -309,11 +305,8 @@ int main (int argc, char *argv[])
 		B[k] = 2*k;
 	}
 
-	/* Initialize and set thread detached attribute */
-	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-
-	printf("|NSize|Iterations|Seq|OpenMP|Th01|Th02|Th04|Th08|Par16|\n");
+	printf("OpenMP:\n");
+	printf("|NSize|Iterations| Seq | Th01 | Th02 | Th04 | Th08 | Par16|\n");
 
 	// for each input size
 	for(c=0; c<NSIZE; c++){
@@ -331,12 +324,40 @@ int main (int argc, char *argv[])
 		result.tv_usec = (endt.tv_sec*1000000+endt.tv_usec) - (startt.tv_sec*1000000+startt.tv_usec);
 		printf(" %ld.%06ld | ", result.tv_usec/1000000, result.tv_usec%1000000);
 
-		/* Run OpenMP algorithm */
+		/* Run OpenMP algorithm(s) */
+		for(nt=1; nt<NUM_THREADS; nt=nt<<1){
+			result.tv_sec=0; result.tv_usec=0;
+			gettimeofday (&startt, NULL);
+			for (t=0; t<TIMES; t++) 
+			{
+				init(n);
+				openmp_function(A, B, C, n/2, n/2, nt);
+			}
+			gettimeofday (&endt, NULL);
+			result.tv_usec += (endt.tv_sec*1000000+endt.tv_usec) - (startt.tv_sec*1000000+startt.tv_usec);
+			printf(" %ld.%06ld | ", result.tv_usec/1000000, result.tv_usec%1000000);
+		}
+		printf("\n");
+	}
+
+	/* Initialize and set thread detached attribute */
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+	printf("Pthread:\n");
+	printf("|NSize|Iterations| Seq | Th01 | Th02 | Th04 | Th08 | Par16|\n");
+
+	// for each input size
+	for(c=0; c<NSIZE; c++){
+		n=Ns[c];
+		printf("| %d | %d |",n,TIMES);
+
+		/* Run sequential algorithm */
 		result.tv_usec=0;
 		gettimeofday (&startt, NULL);
 		for (t=0; t<TIMES; t++) {
 			init(n);
-			openmp_function(A, B, C, n/2, n/2); 
+			opt_seq_merge(A, B, C, 0, vector_A_size, 0, vector_B_size);
 		}
 		gettimeofday (&endt, NULL);
 		result.tv_usec = (endt.tv_sec*1000000+endt.tv_usec) - (startt.tv_sec*1000000+startt.tv_usec);
