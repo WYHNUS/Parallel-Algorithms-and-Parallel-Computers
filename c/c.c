@@ -6,6 +6,8 @@
 #include <math.h>
 #include <sys/time.h>
 
+// Number of threads
+#define NUM_THREADS 32
 //OpenMP chunk size
 #define CHUNK_SIZE 128
 

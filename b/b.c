@@ -6,6 +6,8 @@
 #include <math.h>
 #include <sys/time.h>
 
+// Number of threads
+#define NUM_THREADS 32
 //OpenMP chunk size
 #define CHUNK_SIZE 128
 
@@ -20,15 +22,10 @@ int Ns[NSIZE] = {4096, 8192, 16384, 32768, 65536, 131072, 262144};
 typedef struct __ThreadArg {
 	int id;
 	int nrT;
-	int n;
-	int *A;
-	int *B;
+	int *cur_array;
+	int *compared_array;
 	int *C;
-	int B_length;
-	int *sa;
-	int *sb;
-	int part_size;
-	int num_part;
+	int compared_length;
 } tThreadArg;
 
 pthread_t callThd[NUM_THREADS];
@@ -99,51 +96,16 @@ int get_rank(int v, int *A, int si, int ei, int maxindex) {
 	}
 }
 
-// void seq_merge(int *A, int *B, int *C, int A_length, int B_length) {
-// 	int i, cur_rank;
-
-// 	for (i=0; i<A_length; i++) {
-// 		cur_rank = get_rank(A[i], B, 0, B_length, B_length);
-// 		C[cur_rank + i] = A[i];
-// 	}
-// 	for (i=0; i<B_length; i++) {
-// 		cur_rank = get_rank(B[i], A, 0, A_length, A_length);
-// 		C[cur_rank + i] = B[i];
-// 	}
-// }
-
-// si: start_index; ei: end_index
-void opt_seq_merge(int *A, int*B, int *C, int si_A, int ei_A, int si_B, int ei_B) {
-	/* The code for optimal sequential merge */
-	int i = si_A;
-	int j = si_B;
-	while (i<ei_A || j<ei_B) {
-		if (i<ei_A && A[i] < B[j]) {
-			C[i+j] = A[i];
-			i++;
-		} else {
-			C[i+j] = B[j];
-			j++;
-		}
-	}
-}
-
 void seq_merge(int *A, int *B, int *C, int A_length, int B_length) {
-	int i;
-	int num_part = log2(A_length);
-	int part_size = A_length/num_part;
-	int sa[num_part+1];
-	int sb[num_part+1];
-	sa[0] = 0; sb[0] = 0; 
-	sa[num_part] = A_length; sb[num_part] = B_length;
+	int i, cur_rank;
 
-	for (i=1; i<num_part; i++) {
-		sa[i] = sa[i-1] + part_size;
-		sb[i] = get_rank(A[i*part_size-1], B, 0, B_length);
+	for (i=0; i<A_length; i++) {
+		cur_rank = get_rank(A[i], B, 0, B_length, B_length);
+		C[cur_rank + i] = A[i];
 	}
-
-	for (i=0; i<num_part; i++) {
-		opt_seq_merge(A, B, C, sa[i], sa[i+1], sb[i], sb[i+1]);
+	for (i=0; i<B_length; i++) {
+		cur_rank = get_rank(B[i], A, 0, A_length, A_length);
+		C[cur_rank + i] = B[i];
 	}
 }
 
@@ -152,68 +114,38 @@ void openmp_function(int *A, int *B, int *C, int A_length, int B_length, int num
 	int i, chunk;
 	chunk = CHUNK_SIZE;
 
-	int num_part = log2(A_length);
-	int part_size = A_length/num_part;
-	int sa[num_part+1];
-	int sb[num_part+1];
-	sa[0] = 0; sb[0] = 0; 
-	sa[num_part] = A_length; sb[num_part] = B_length;
-
-#pragma omp parallel for shared(A, sa, sb, chunk, num_threads) \
+#pragma omp parallel for shared(A, B, C, chunk, num_threads) \
 	private(i) schedule(static, chunk) num_threads(num_threads) 
-	for (i=1; i<num_part; i++) {
-		sa[i] = sa[i-1] + part_size;
-		sb[i] = get_rank(A[i*part_size-1], B, 0, B_length);
+	for (i=1; i<A_length; i++) {
+		int cur_rank = get_rank(A[i], B, 0, B_length, B_length);
+		C[cur_rank + i] = A[i];
 	}
 
-#pragma omp parallel for shared(A, B, C, sa, sb, chunk, num_threads) \
+#pragma omp parallel for shared(A, B, C, chunk, num_threads) \
 	private(i) schedule(static, chunk) num_threads(num_threads) 
-	for (i=0; i<num_part; i++) {
-		opt_seq_merge(A, B, C, sa[i], sa[i+1], sb[i], sb[i+1]);
+	for (i=0; i<B_length; i++) {
+		int cur_rank = get_rank(B[i], A, 0, A_length, A_length);
+		C[cur_rank + i] = B[i];
 	}
 }
 
-void *calc_rank(void *par_arg) {
+void *calc_rank_and_update(void *para_arg) {
 	tThreadArg *thread_arg;
-	thread_arg = (tThreadArg *)par_arg;
+	thread_arg = (tThreadArg *)para_arg;
 
-	int i, j, num_part, part_size, ele_per_td, si, ei;
-	int *sa = thread_arg->sa;
-	int *sb = thread_arg->sb;
+	int cur_array = thread_arg->cur_array;
+	int compared_array = thread_arg->compared_array;
+	int result_array = thread_arg->C;
+	int maxindex = thread_arg->compared_length;
 
-	j = thread_arg->id;
-	num_part = thread_arg->num_part;
-	part_size = thread_arg->part_size;
-
-	ele_per_td = (int)(num_part / thread_arg->nrT);
-	si = (j - 1) * ele_per_td;
-	ei = j * ele_per_td;
-
+	int i;
+	int j = thread_arg->id;
+	int ele_per_td = (int)(maxindex / thread_arg->nrT);
+	int si = (j - 1) * ele_per_td;
+	int ei = j * ele_per_td;
 	for (i=si; i<ei; i++) {
-		sa[i] = i * part_size;
-		sb[i] = get_rank(thread_arg->A[i*part_size-1], thread_arg->B, 0, thread_arg->B_length);
-	}
-
-	return NULL;
-}
-
-void *par_merge(void *par_arg) {
-	tThreadArg *thread_arg;
-	thread_arg = (tThreadArg *)par_arg;
-
-	int i, j, num_part, ele_per_td, si, ei;
-	int *sa = thread_arg->sa;
-	int *sb = thread_arg->sb;
-
-	j = thread_arg->id;
-	num_part = thread_arg->num_part;
-
-	ele_per_td = (int)(num_part / thread_arg->nrT);
-	si = (j - 1) * ele_per_td;
-	ei = j * ele_per_td;
-
-	for (i=si; i<ei; i++) {
-		opt_seq_merge(thread_arg->A, thread_arg->B, thread_arg->C, sa[i], sa[i+1], sb[i], sb[i+1]);
+		int cur_rank = get_rank(cur_array[i], compared_array, 0, maxindex, maxindex);
+		result_array[cur_rank + i] = cur_array[i];
 	}
 }
 
@@ -223,27 +155,16 @@ void par_function(int *A, int *B, int *C, int A_length, int B_length, int nt){
 	tThreadArg x[NUM_THREADS];
 
 	int j;
-	int num_part = log2(A_length);
-	int part_size = A_length/num_part;
-	int sa[num_part+1];
-	int sb[num_part+1];
-	sa[0] = 0; sb[0] = 0; 
-	sa[num_part] = A_length; sb[num_part] = B_length;
-
 	// parallelize the original for loop
 	for (j=1; j<=nt; j++)
 	{
 		x[j].id = j; 
 		x[j].nrT=nt; // number of threads in this round
-		x[j].A = A;
-		x[j].B = B;
+		x[j].cur_array = A;
+		x[j].compared_array = B;
 		x[j].C = C;
-		x[j].B_length = B_length;
-		x[j].sa = sa;
-		x[j].sb = sb;
-		x[j].part_size = part_size;
-		x[j].num_part = num_part;
-		pthread_create(&callThd[j-1], &attr, calc_rank, (void *)&x[j]);
+		x[j].compared_length = B_length;
+		pthread_create(&callThd[j-1], &attr, calc_rank_and_update, (void *)&x[j]);
 	}
 
 	/* Wait on the other threads */
@@ -255,6 +176,12 @@ void par_function(int *A, int *B, int *C, int A_length, int B_length, int nt){
 	// parallelize the original for loop
 	for (j=1; j<=nt; j++)
 	{
+		x[j].id = j; 
+		x[j].nrT=nt; // number of threads in this round
+		x[j].cur_array = B;
+		x[j].compared_array = A;
+		x[j].C = C;
+		x[j].compared_length = A_length;
 		pthread_create(&callThd[j-1], &attr, par_merge, (void *)&x[j]);
 	}
 
@@ -264,6 +191,7 @@ void par_function(int *A, int *B, int *C, int A_length, int B_length, int nt){
 		pthread_join(callThd[j], &status);
 	}
 }
+
 
 int main (int argc, char *argv[])
 {
@@ -318,7 +246,7 @@ int main (int argc, char *argv[])
 		gettimeofday (&startt, NULL);
 		for (t=0; t<TIMES; t++) {
 			init(n);
-			opt_seq_merge(A, B, C, 0, vector_A_size, 0, vector_B_size);
+			seq_merge(A, B, C, n/2, n/2);
 		}
 		gettimeofday (&endt, NULL);
 		result.tv_usec = (endt.tv_sec*1000000+endt.tv_usec) - (startt.tv_sec*1000000+startt.tv_usec);
@@ -357,7 +285,7 @@ int main (int argc, char *argv[])
 		gettimeofday (&startt, NULL);
 		for (t=0; t<TIMES; t++) {
 			init(n);
-			opt_seq_merge(A, B, C, 0, vector_A_size, 0, vector_B_size);
+			seq_merge(A, B, C, n/2, n/2);
 		}
 		gettimeofday (&endt, NULL);
 		result.tv_usec = (endt.tv_sec*1000000+endt.tv_usec) - (startt.tv_sec*1000000+startt.tv_usec);
