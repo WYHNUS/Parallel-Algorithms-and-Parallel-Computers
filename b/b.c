@@ -144,10 +144,11 @@ void *calc_rank_and_update(void *para_arg) {
 	int ele_per_td = (int)(thread_arg->n / thread_arg->nrT);
 	int si = (j - 1) * ele_per_td;
 	int ei = j * ele_per_td;
-	printf("si: %d    ei: %d\n",si, ei );
+	if (j == thread_arg->nrT) {
+		ei = thread_arg->n;
+	}
 	for (i=si; i<ei; i++) {
 		int cur_rank = get_rank(cur_array[i], compared_array, 0, maxindex, maxindex);
-		printf("%d\n", cur_rank);
 		result_array[cur_rank + i] = cur_array[i];
 	}
 }

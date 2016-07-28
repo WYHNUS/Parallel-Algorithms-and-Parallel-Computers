@@ -25,61 +25,63 @@
 	#pragma omp parallel for shared(Z, array, chunk, num_threads) \
 		private(i) schedule(static, chunk) num_threads(num_threads) 
 ""1	LINE	0
+			printf("%d\n", cur_rank);
+"2	LINE	0
+		printf("n:%d    nrt :%d   
+"3	LINE	0
 	#pragma omp parallel for shared(Z, array, chunk, num_threads) \
 		private(i) schedule(static, chunk) num_threads(num_threads) 
-"2	LINE	0
+"4	LINE	0
 	printf("array A:");
 	print_array(A, vector_A_size);
 	printf("array B:");
 	print_array(B, vector_B_size);
 	printf("array C:");
 	print_array(C, vector_A_size + vector_B_size);
-"3	LINE	0
-	print_array(A, vector_A_size);
-	print_array(B, vector_B_size);
-	print_array(C, vector_A_size + vector_B_size);
-"4	LINE	0
-	print_array(A, vector_A_size);
-	print_array(B, vector_B_size);
-	print_array(C, vector_A_size + vector_B_size);
 "5	LINE	0
+	print_array(A, vector_A_size);
+	print_array(B, vector_B_size);
+	print_array(C, vector_A_size + vector_B_size);
+"6	LINE	0
+	print_array(A, vector_A_size);
+	print_array(B, vector_B_size);
+	print_array(C, vector_A_size + vector_B_size);
+"7	LINE	0
 			}
 		}
-"6	LINE	0
-			{
-"7	LINE	0
-			schedule(static, chunk) num_threads(num_threads)
 "8	LINE	0
-	#pragma omp parallel for shared(S, R, i) private(j) \
+			{
 "9	LINE	0
-	print_array(R, n);
+			schedule(static, chunk) num_threads(num_threads)
 "-	CHAR	0
-	L;
+	  si: %d    ei: %d\n",thread_arg->n,thread_arg->nrT,si, ei );
 
 # File marks:
-'0  25  6  ~/b/b.c
-'1  147  37  ~/b/b.c
-'2  231  0  ~/b/b.c
-'3  137  5  ~/b/b.c
-'4  235  30  ~/c/c.c
-'5  123  0  ~/c/c.c
-'6  160  41  ~/a/a.c
-'7  149  0  ~/c/c.c
-'8  1  0  ~/b/b.c
-'9  190  0  ~/a/a.c
+'0  152  2  ~/b/b.c
+'1  148  20  ~/b/b.c
+'2  150  77  ~/b/b.c
+'3  146  9  ~/b/b.c
+'4  25  6  ~/b/b.c
+'5  232  0  ~/b/b.c
+'6  137  5  ~/b/b.c
+'7  235  30  ~/c/c.c
+'8  123  0  ~/c/c.c
+'9  160  41  ~/a/a.c
 
 # Jumplist (newest first):
+-'  152  2  ~/b/b.c
+-'  148  20  ~/b/b.c
+-'  150  77  ~/b/b.c
+-'  146  9  ~/b/b.c
 -'  25  6  ~/b/b.c
 -'  44  0  ~/b/b.c
 -'  53  0  ~/b/b.c
 -'  8  0  ~/b/b.c
--'  147  37  ~/b/b.c
--'  226  1  ~/b/b.c
+-'  227  1  ~/b/b.c
 -'  24  0  ~/b/b.c
--'  231  0  ~/b/b.c
+-'  232  0  ~/b/b.c
 -'  137  5  ~/b/b.c
--'  146  9  ~/b/b.c
--'  190  58  ~/b/b.c
+-'  191  58  ~/b/b.c
 -'  1  0  ~/b/b.c
 -'  235  30  ~/c/c.c
 -'  123  0  ~/c/c.c
@@ -90,16 +92,16 @@
 -'  131  49  ~/c/c.c
 -'  304  19  ~/c/c.c
 -'  143  2  ~/b/b.c
--'  272  53  ~/b/b.c
+-'  273  53  ~/b/b.c
 -'  1  0  ~/a/a.c
 -'  163  0  ~/a/a.c
 -'  185  0  ~/a/a.c
 -'  309  24  ~/a/a.c
 -'  310  24  ~/a/a.c
 -'  108  43  ~/b/b.c
--'  191  3  ~/b/b.c
+-'  192  3  ~/b/b.c
 -'  103  0  ~/b/b.c
--'  188  0  ~/b/b.c
+-'  189  0  ~/b/b.c
 -'  80  10  ~/c/c.c
 -'  88  0  ~/c/c.c
 -'  320  16  ~/c/c.c
@@ -113,10 +115,10 @@
 -'  170  44  ~/c/c.c
 -'  183  8  ~/c/c.c
 -'  205  1  ~/c/c.c
--'  239  1  ~/b/b.c
+-'  240  1  ~/b/b.c
 -'  120  0  ~/b/b.c
 -'  157  1  ~/c/c.c
--'  241  0  ~/b/b.c
+-'  242  0  ~/b/b.c
 -'  194  1  ~/c/c.c
 -'  145  35  ~/c/c.c
 -'  152  65  ~/c/c.c
@@ -166,15 +168,13 @@
 -'  126  19  ~/a.c
 -'  1  0  ~/a.c
 -'  126  19  ~/a.c
--'  1  0  ~/a.c
--'  126  19  ~/a.c
 
 # History of marks within files (newest to oldest):
 
 > ~/b/b.c
-	"	25	6
-	^	25	7
-	.	25	4
+	"	152	2
+	^	148	21
+	.	152	0
 	+	107	0
 	+	132	32
 	+	67	22
@@ -183,27 +183,27 @@
 	+	69	40
 	+	3	0
 	+	4	0
-	+	208	14
-	+	224	12
-	+	230	14
-	+	236	12
-	+	228	1
-	+	234	1
-	+	236	1
-	+	239	3
-	+	234	0
-	+	228	0
-	+	236	0
-	+	240	0
-	+	188	1
-	+	191	2
-	+	191	2
-	+	188	1
-	+	191	3
+	+	209	14
+	+	225	12
+	+	231	14
+	+	237	12
+	+	229	1
+	+	235	1
+	+	237	1
+	+	240	3
+	+	235	0
+	+	229	0
+	+	237	0
+	+	241	0
+	+	189	1
+	+	192	2
+	+	192	2
+	+	189	1
+	+	192	3
+	+	194	0
+	+	192	2
 	+	193	0
-	+	191	2
-	+	192	0
-	+	188	0
+	+	189	0
 	+	108	30
 	+	108	0
 	+	108	0
@@ -211,50 +211,61 @@
 	+	108	12
 	+	108	22
 	+	108	0
-	+	167	0
-	+	190	0
-	+	190	18
-	+	190	0
-	+	190	14
-	+	190	14
-	+	272	53
-	+	190	0
-	+	272	53
+	+	168	0
+	+	191	0
+	+	191	18
+	+	191	0
+	+	191	14
+	+	191	14
+	+	273	53
+	+	191	0
+	+	273	53
 	+	138	0
 	+	134	0
 	+	141	0
 	+	144	0
 	+	24	0
-	+	226	56
-	+	190	58
+	+	227	56
+	+	191	58
 	+	138	5
 	+	139	5
 	+	137	5
-	+	150	1
-	+	151	0
-	+	150	27
-	+	151	0
-	+	233	1
+	+	152	1
+	+	152	0
+	+	152	27
+	+	152	0
+	+	234	1
 	+	72	7
 	+	73	0
 	+	72	7
-	+	337	0
-	+	299	30
-	+	288	3
-	+	276	51
-	+	276	49
-	+	260	3
-	+	261	1
-	+	249	3
-	+	250	1
-	+	234	2
-	+	235	1
-	+	148	0
-	+	147	37
+	+	338	0
+	+	300	30
+	+	289	3
+	+	277	51
+	+	277	49
+	+	261	3
+	+	262	1
+	+	250	3
+	+	251	1
+	+	235	2
+	+	236	1
+	+	150	0
+	+	150	37
 	+	144	36
-	+	166	17
-	+	185	17
+	+	167	17
+	+	186	17
 	+	25	4
+	+	145	12
+	+	146	13
+	+	145	10
+	+	146	10
+	+	150	77
+	+	147	28
+	+	148	0
+	+	149	0
+	+	148	20
+	+	150	0
+	+	152	0
 
 > ~/c/c.c
 	"	235	30
