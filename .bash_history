@@ -436,3 +436,51 @@ git push origin master
 exit
 ssh yanhaowang@TUD277869.ws.tudelft.net
 exit
+ls
+cd a
+gcc -pthread  a.c -lm -fopenmp
+vim a.c
+gcc -pthread  a.c -lm -fopenmp
+vim a.c
+gcc -pthread  a.c -lm -fopenmp
+./a
+./a.out 
+./a
+./a.out 
+cd ..
+ls
+git status
+git add .
+cd b
+vim b.c
+gcc b.c -pthread -lm -fopenml
+gcc b.c -pthread -lm -fopenmp
+./a.out 
+cd ../c
+ls
+vim c.c 
+gcc c.c -pthread -lm -fopenmp
+./a.out 
+cd ..
+git status
+cd a
+ls
+rm a
+ls
+cd ..
+git add .
+git status
+git commit -a -m "fix openmp syntax"
+git push origin master
+git pull origin master
+git status
+git add .
+git commit -a -m "fix conflict"
+git push origin master
+exit
+ssh yanhaowang@TUD277869.ws.tudelft.net
+exit
+ls
+git pull origin master
+cd a
+ls

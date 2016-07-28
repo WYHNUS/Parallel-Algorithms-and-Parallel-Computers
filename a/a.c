@@ -157,7 +157,7 @@ void openmp_minima(int *array, int n, int choice, int num_threads) {
 	}
 
 	// recursion
-	openmp_minima(Z, n/2, choice);
+	openmp_minima(Z, n/2, choice, num_threads);
 
 	if (choice == 1) {
 #pragma omp parallel for shared(Z, array, chunk, num_threads) \

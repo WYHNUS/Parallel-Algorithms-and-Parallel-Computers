@@ -232,7 +232,7 @@ int main (int argc, char *argv[])
 
 	printf("Results for openmp algorithm: (ignore leading 0)\n");
 	init(data_length);
-	openmp_function(data_length);
+	openmp_function(data_length, 2);
 	print_array(R, data_length);
 
 	printf("Results for pthread algorithm: (ignore leading 0)\n");

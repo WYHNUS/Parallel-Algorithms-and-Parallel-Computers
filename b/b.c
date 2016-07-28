@@ -22,6 +22,7 @@ int Ns[NSIZE] = {4096, 8192, 16384, 32768, 65536, 131072, 262144};
 typedef struct __ThreadArg {
 	int id;
 	int nrT;
+	int n;
 	int *cur_array;
 	int *compared_array;
 	int *C;
@@ -133,18 +134,20 @@ void *calc_rank_and_update(void *para_arg) {
 	tThreadArg *thread_arg;
 	thread_arg = (tThreadArg *)para_arg;
 
-	int cur_array = thread_arg->cur_array;
-	int compared_array = thread_arg->compared_array;
-	int result_array = thread_arg->C;
+	int *cur_array = thread_arg->cur_array;
+	int *compared_array = thread_arg->compared_array;
+	int *result_array = thread_arg->C;
 	int maxindex = thread_arg->compared_length;
 
 	int i;
 	int j = thread_arg->id;
-	int ele_per_td = (int)(maxindex / thread_arg->nrT);
+	int ele_per_td = (int)(thread_arg->n / thread_arg->nrT);
 	int si = (j - 1) * ele_per_td;
 	int ei = j * ele_per_td;
+	printf("si: %d    ei: %d\n",si, ei );
 	for (i=si; i<ei; i++) {
 		int cur_rank = get_rank(cur_array[i], compared_array, 0, maxindex, maxindex);
+		printf("%d\n", cur_rank);
 		result_array[cur_rank + i] = cur_array[i];
 	}
 }
@@ -160,6 +163,7 @@ void par_function(int *A, int *B, int *C, int A_length, int B_length, int nt){
 	{
 		x[j].id = j; 
 		x[j].nrT=nt; // number of threads in this round
+		x[j].n=A_length;
 		x[j].cur_array = A;
 		x[j].compared_array = B;
 		x[j].C = C;
@@ -178,11 +182,12 @@ void par_function(int *A, int *B, int *C, int A_length, int B_length, int nt){
 	{
 		x[j].id = j; 
 		x[j].nrT=nt; // number of threads in this round
+		x[j].n=B_length;
 		x[j].cur_array = B;
 		x[j].compared_array = A;
 		x[j].C = C;
 		x[j].compared_length = A_length;
-		pthread_create(&callThd[j-1], &attr, par_merge, (void *)&x[j]);
+		pthread_create(&callThd[j-1], &attr, calc_rank_and_update, (void *)&x[j]);
 	}
 
 	/* Wait on the other threads */
@@ -218,15 +223,15 @@ int main (int argc, char *argv[])
 
 	printf("Result after merging for openmp algorithm:\n");
 	init(vector_A_size + vector_B_size);
-	openmp_function(A, B, C, vector_A_size, vector_B_size);
+	openmp_function(A, B, C, vector_A_size, vector_B_size, 2);
 	print_array(C, vector_A_size + vector_B_size);
 
 	printf("Results for pthread algorithm:\n");
 	init(vector_A_size + vector_B_size);
 	par_function(A, B, C, vector_A_size, vector_B_size, 3);
 	print_array(C, vector_A_size + vector_B_size);
-
-	/* Generate a seed input */
+/*
+	// Generate a seed input 
 	srand ( time(NULL) );
 	for(k=0; k<NMAX; k++){
 		A[k] = k;
@@ -241,7 +246,7 @@ int main (int argc, char *argv[])
 		n=Ns[c];
 		printf("| %d | %d |",n,TIMES);
 
-		/* Run sequential algorithm */
+		// Run sequential algorithm 
 		result.tv_usec=0;
 		gettimeofday (&startt, NULL);
 		for (t=0; t<TIMES; t++) {
@@ -252,7 +257,7 @@ int main (int argc, char *argv[])
 		result.tv_usec = (endt.tv_sec*1000000+endt.tv_usec) - (startt.tv_sec*1000000+startt.tv_usec);
 		printf(" %ld.%06ld | ", result.tv_usec/1000000, result.tv_usec%1000000);
 
-		/* Run OpenMP algorithm(s) */
+		// Run OpenMP algorithm(s) 
 		for(nt=1; nt<NUM_THREADS; nt=nt<<1){
 			result.tv_sec=0; result.tv_usec=0;
 			gettimeofday (&startt, NULL);
@@ -268,7 +273,7 @@ int main (int argc, char *argv[])
 		printf("\n");
 	}
 
-	/* Initialize and set thread detached attribute */
+	// Initialize and set thread detached attribute 
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
@@ -280,7 +285,7 @@ int main (int argc, char *argv[])
 		n=Ns[c];
 		printf("| %d | %d |",n,TIMES);
 
-		/* Run sequential algorithm */
+		// Run sequential algorithm 
 		result.tv_usec=0;
 		gettimeofday (&startt, NULL);
 		for (t=0; t<TIMES; t++) {
@@ -291,7 +296,7 @@ int main (int argc, char *argv[])
 		result.tv_usec = (endt.tv_sec*1000000+endt.tv_usec) - (startt.tv_sec*1000000+startt.tv_usec);
 		printf(" %ld.%06ld | ", result.tv_usec/1000000, result.tv_usec%1000000);
 
-		/* Run pthread algorithm(s) */
+		// Run pthread algorithm(s) 
 		for(nt=1; nt<NUM_THREADS; nt=nt<<1){
 			if(pthread_barrier_init(&barr, NULL, nt+1))
 			{
@@ -329,4 +334,5 @@ int main (int argc, char *argv[])
 		printf("\n");
 	}
 	pthread_exit(NULL);
+*/
 }
