@@ -484,3 +484,62 @@ ls
 git pull origin master
 cd a
 ls
+cd a
+gcc a.c -pthread -lm -fopenmp
+vim a.c
+gcc a.c -pthread -lm -fopenmp
+./a.out 
+cd ../b
+gcc b.c -pthread -lm -fopenmp
+cd ../c
+gcc c.c -pthread -lm -fopenmp
+vim c.c
+gcc c.c -pthread -lm -fopenmp
+./a.out 
+cd ../b
+gcc b.c -pthread -lm -fopenmp
+vim b.c
+gcc b.c -pthread -lm -fopenmp
+./a.out 
+vim b.c
+gcc b.c -pthread -lm -fopenmp
+./a.out 
+vim b.c
+gcc b.c -pthread -lm -fopenmp
+./a.out 
+vim b.c
+gcc b.c -pthread -lm -fopenmp
+./a.out 
+cd ..
+git status
+git add .
+git commit -a -m "fix typo"
+git push origin master
+cd b
+vim b.c
+gcc b.c -pthread -ml -openmp
+gcc b.c -pthread -lm -fopenmp
+./a.out 
+vim b.c 
+gcc b.c -pthread -ml -openmp
+gcc b.c -pthread -lm -fopenmp
+./a.out 
+vim b.c 
+gcc b.c -pthread -lm -fopenmp
+vim b.c 
+gcc b.c -pthread -lm -fopenmp
+./a.out 
+vim b.c 
+gcc b.c -pthread -lm -fopenmp
+./a.out 
+vim b.c 
+gcc b.c -pthread -lm -fopenmp
+./a.out 
+cd ..
+git commit -a -m "fix part b pthread bug"
+git push origin master
+cd b
+vim b.c 
+gcc b.c -pthread -lm -fopenmp
+./a.out 
+exit

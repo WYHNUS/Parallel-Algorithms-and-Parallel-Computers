@@ -117,7 +117,7 @@ void openmp_function(int *A, int *B, int *C, int A_length, int B_length, int num
 
 #pragma omp parallel for shared(A, B, C, chunk, num_threads) \
 	private(i) schedule(static, chunk) num_threads(num_threads) 
-	for (i=1; i<A_length; i++) {
+	for (i=0; i<A_length; i++) {
 		int cur_rank = get_rank(A[i], B, 0, B_length, B_length);
 		C[cur_rank + i] = A[i];
 	}
@@ -231,7 +231,7 @@ int main (int argc, char *argv[])
 	init(vector_A_size + vector_B_size);
 	par_function(A, B, C, vector_A_size, vector_B_size, 3);
 	print_array(C, vector_A_size + vector_B_size);
-/*
+
 	// Generate a seed input 
 	srand ( time(NULL) );
 	for(k=0; k<NMAX; k++){
@@ -335,5 +335,4 @@ int main (int argc, char *argv[])
 		printf("\n");
 	}
 	pthread_exit(NULL);
-*/
 }
